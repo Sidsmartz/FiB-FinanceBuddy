@@ -40,11 +40,11 @@ export default function GoalsScreen() {
     <ScrollView style={styles.container}>
       <View style={styles.box}>
         <Text style={styles.title}>EMERGENCY SAVINGS</Text>
-        <Text style={styles.amount}>${emergencySavings.toFixed(2)}</Text>
+        <Text style={styles.amount}>₹{emergencySavings.toFixed(2)}</Text>
         <TextInput
           style={styles.input}
           placeholder="Add Amount"
-          placeholderTextColor="#006600"
+          placeholderTextColor="#444444"
           value={emergencyAmount}
           onChangeText={setEmergencyAmount}
           keyboardType="numeric"
@@ -59,14 +59,14 @@ export default function GoalsScreen() {
         <TextInput
           style={styles.input}
           placeholder="Goal Name"
-          placeholderTextColor="#006600"
+          placeholderTextColor="#444444"
           value={goalName}
           onChangeText={setGoalName}
         />
         <TextInput
           style={styles.input}
           placeholder="Target Amount"
-          placeholderTextColor="#006600"
+          placeholderTextColor="#444444"
           value={goalTarget}
           onChangeText={setGoalTarget}
           keyboardType="numeric"
@@ -82,7 +82,7 @@ export default function GoalsScreen() {
           <View key={goal.id} style={styles.goalItem}>
             <Text style={styles.goalName}>{goal.name}</Text>
             <Text style={styles.goalProgress}>
-              ${goal.current.toFixed(2)} / ${goal.target.toFixed(2)}
+              ₹{goal.current.toFixed(2)} / ₹{goal.target.toFixed(2)}
             </Text>
             <View style={styles.progressBar}>
               <View 
@@ -108,7 +108,7 @@ export default function GoalsScreen() {
           <TextInput
             style={styles.input}
             placeholder="Amount"
-            placeholderTextColor="#006600"
+            placeholderTextColor="#444444"
             value={addAmount}
             onChangeText={setAddAmount}
             keyboardType="numeric"
@@ -125,88 +125,86 @@ export default function GoalsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0a0a',
-    padding: 16,
+    backgroundColor: '#000000',
+    padding: 20,
   },
   box: {
-    borderWidth: 2,
-    borderColor: '#00ff00',
-    borderStyle: 'dashed',
-    padding: 16,
-    marginBottom: 16,
-    backgroundColor: '#1a1a1a',
-  },
-  title: {
-    color: '#00ff00',
-    fontFamily: 'monospace',
-    fontSize: 14,
-    marginBottom: 8,
-  },
-  amount: {
-    color: '#00ff00',
-    fontFamily: 'monospace',
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 12,
-  },
-  input: {
-    borderWidth: 2,
-    borderColor: '#00ff00',
-    borderStyle: 'dashed',
-    padding: 12,
-    marginBottom: 12,
-    color: '#00ff00',
-    fontFamily: 'monospace',
+    borderWidth: 1,
+    borderColor: '#333333',
+    padding: 20,
+    marginBottom: 20,
     backgroundColor: '#0a0a0a',
   },
+  title: {
+    color: '#ffffff',
+    fontFamily: 'PixelFont',
+    fontSize: 10,
+    letterSpacing: 2,
+    marginBottom: 12,
+  },
+  amount: {
+    color: '#ffffff',
+    fontFamily: 'PixelFont',
+    fontSize: 24,
+    marginBottom: 16,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#333333',
+    padding: 14,
+    marginBottom: 12,
+    color: '#ffffff',
+    fontFamily: 'UbuntuMono',
+    backgroundColor: '#000000',
+    fontSize: 13,
+  },
   button: {
-    borderWidth: 2,
-    borderColor: '#00ff00',
-    borderStyle: 'dashed',
-    padding: 12,
+    borderWidth: 1,
+    borderColor: '#ffffff',
+    padding: 14,
     alignItems: 'center',
-    backgroundColor: '#002200',
+    backgroundColor: '#1a1a1a',
   },
   buttonText: {
-    color: '#00ff00',
-    fontFamily: 'monospace',
-    fontSize: 14,
+    color: '#ffffff',
+    fontFamily: 'PixelFont',
+    fontSize: 10,
+    letterSpacing: 1,
   },
   goalItem: {
-    marginBottom: 16,
-    paddingBottom: 16,
+    marginBottom: 20,
+    paddingBottom: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#333',
+    borderBottomColor: '#1a1a1a',
   },
   goalName: {
-    color: '#00ff00',
-    fontFamily: 'monospace',
-    fontSize: 16,
-    marginBottom: 4,
-  },
-  goalProgress: {
-    color: '#00ff00',
-    fontFamily: 'monospace',
+    color: '#ffffff',
+    fontFamily: 'PixelFont',
     fontSize: 12,
     marginBottom: 8,
   },
+  goalProgress: {
+    color: '#cccccc',
+    fontFamily: 'UbuntuMono',
+    fontSize: 12,
+    marginBottom: 12,
+  },
   progressBar: {
-    height: 20,
-    borderWidth: 2,
-    borderColor: '#00ff00',
-    borderStyle: 'dashed',
-    marginBottom: 8,
+    height: 24,
+    borderWidth: 1,
+    borderColor: '#333333',
+    marginBottom: 12,
+    backgroundColor: '#000000',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#00ff00',
+    backgroundColor: '#ffffff',
   },
   smallButton: {
-    borderWidth: 2,
-    borderColor: '#00ff00',
-    borderStyle: 'dashed',
-    padding: 8,
+    borderWidth: 1,
+    borderColor: '#ffffff',
+    padding: 10,
     alignItems: 'center',
-    backgroundColor: '#002200',
+    backgroundColor: '#1a1a1a',
   },
 });

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Modal } from 'react-native';
 import { useData } from '../context/DataContext';
+import * as Animatable from 'react-native-animatable';
 
 const CATEGORIES = ['Books', 'Food', 'Gifts', 'Movies', 'Groceries', 'Transport', 'Entertainment', 'Others'];
 
@@ -12,6 +13,7 @@ export default function ExpenseScreen() {
   const [split, setSplit] = useState('');
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [balanceAmount, setBalanceAmount] = useState('');
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const handleAddExpense = () => {
     if (!title || !amount || !category) {
@@ -30,22 +32,32 @@ export default function ExpenseScreen() {
     setAmount('');
     setCategory('');
     setSplit('');
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 2000);
   };
 
   const handleAddBalance = () => {
     if (!balanceAmount) return;
     addBalance(parseFloat(balanceAmount));
     setBalanceAmount('');
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 2000);
   };
 
   return (
     <ScrollView style={styles.container}>
-      <View style={styles.box}>
+      {showSuccess && (
+        <Animatable.View animation="bounceIn" style={styles.successBanner}>
+          <Text style={styles.successText}>✓ SUCCESS!</Text>
+        </Animatable.View>
+      )}
+
+      <Animatable.View animation="fadeInDown" delay={100} style={styles.box}>
         <Text style={styles.title}>ADD BALANCE</Text>
         <TextInput
           style={styles.input}
           placeholder="Amount"
-          placeholderTextColor="#006600"
+          placeholderTextColor="#444444"
           value={balanceAmount}
           onChangeText={setBalanceAmount}
           keyboardType="numeric"
@@ -53,15 +65,15 @@ export default function ExpenseScreen() {
         <TouchableOpacity style={styles.button} onPress={handleAddBalance}>
           <Text style={styles.buttonText}>ADD</Text>
         </TouchableOpacity>
-      </View>
+      </Animatable.View>
 
-      <View style={styles.box}>
+      <Animatable.View animation="fadeInUp" delay={200} style={styles.box}>
         <Text style={styles.title}>LOG EXPENSE</Text>
         
         <TextInput
           style={styles.input}
           placeholder="Title"
-          placeholderTextColor="#006600"
+          placeholderTextColor="#444444"
           value={title}
           onChangeText={setTitle}
         />
@@ -69,7 +81,7 @@ export default function ExpenseScreen() {
         <TextInput
           style={styles.input}
           placeholder="Amount"
-          placeholderTextColor="#006600"
+          placeholderTextColor="#444444"
           value={amount}
           onChangeText={setAmount}
           keyboardType="numeric"
@@ -79,7 +91,7 @@ export default function ExpenseScreen() {
           style={styles.input} 
           onPress={() => setShowCategoryModal(true)}
         >
-          <Text style={styles.inputText}>
+          <Text style={[styles.inputText, !category && styles.placeholder]}>
             {category || 'Select Category'}
           </Text>
         </TouchableOpacity>
@@ -87,7 +99,7 @@ export default function ExpenseScreen() {
         <TextInput
           style={styles.input}
           placeholder="Split Amount (optional)"
-          placeholderTextColor="#006600"
+          placeholderTextColor="#444444"
           value={split}
           onChangeText={setSplit}
           keyboardType="numeric"
@@ -96,7 +108,7 @@ export default function ExpenseScreen() {
         <TouchableOpacity style={styles.button} onPress={handleAddExpense}>
           <Text style={styles.buttonText}>LOG EXPENSE</Text>
         </TouchableOpacity>
-      </View>
+      </Animatable.View>
 
       <Modal
         visible={showCategoryModal}
@@ -105,21 +117,32 @@ export default function ExpenseScreen() {
         onRequestClose={() => setShowCategoryModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalBox}>
+          <Animatable.View animation="zoomIn" duration={300} style={styles.modalBox}>
             <Text style={styles.modalTitle}>SELECT CATEGORY</Text>
-            {CATEGORIES.map(cat => (
-              <TouchableOpacity
+            {CATEGORIES.map((cat, idx) => (
+              <Animatable.View
                 key={cat}
-                style={styles.categoryItem}
-                onPress={() => {
-                  setCategory(cat);
-                  setShowCategoryModal(false);
-                }}
+                animation="fadeInRight"
+                delay={idx * 50}
               >
-                <Text style={styles.categoryText}>{cat}</Text>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.categoryItem}
+                  onPress={() => {
+                    setCategory(cat);
+                    setShowCategoryModal(false);
+                  }}
+                >
+                  <Text style={styles.categoryText}>{cat}</Text>
+                </TouchableOpacity>
+              </Animatable.View>
             ))}
-          </View>
+            <TouchableOpacity 
+              style={styles.closeButton}
+              onPress={() => setShowCategoryModal(false)}
+            >
+              <Text style={styles.buttonText}>CLOSE</Text>
+            </TouchableOpacity>
+          </Animatable.View>
         </View>
       </Modal>
     </ScrollView>
@@ -129,76 +152,102 @@ export default function ExpenseScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0a0a',
+    backgroundColor: '#000000',
+    padding: 20,
+  },
+  successBanner: {
+    backgroundColor: '#1a1a1a',
+    borderWidth: 1,
+    borderColor: '#ffffff',
     padding: 16,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  successText: {
+    color: '#ffffff',
+    fontFamily: 'PixelFont',
+    fontSize: 12,
+    letterSpacing: 2,
   },
   box: {
-    borderWidth: 2,
-    borderColor: '#00ff00',
-    borderStyle: 'dashed',
-    padding: 16,
-    marginBottom: 16,
-    backgroundColor: '#1a1a1a',
-  },
-  title: {
-    color: '#00ff00',
-    fontFamily: 'monospace',
-    fontSize: 14,
-    marginBottom: 12,
-  },
-  input: {
-    borderWidth: 2,
-    borderColor: '#00ff00',
-    borderStyle: 'dashed',
-    padding: 12,
-    marginBottom: 12,
-    color: '#00ff00',
-    fontFamily: 'monospace',
+    borderWidth: 1,
+    borderColor: '#333333',
+    padding: 20,
+    marginBottom: 20,
     backgroundColor: '#0a0a0a',
   },
+  title: {
+    color: '#ffffff',
+    fontFamily: 'PixelFont',
+    fontSize: 10,
+    letterSpacing: 2,
+    marginBottom: 16,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#333333',
+    padding: 14,
+    marginBottom: 12,
+    color: '#ffffff',
+    fontFamily: 'UbuntuMono',
+    backgroundColor: '#000000',
+    fontSize: 13,
+  },
   inputText: {
-    color: '#00ff00',
-    fontFamily: 'monospace',
+    color: '#ffffff',
+    fontFamily: 'UbuntuMono',
+  },
+  placeholder: {
+    color: '#444444',
   },
   button: {
-    borderWidth: 2,
-    borderColor: '#00ff00',
-    borderStyle: 'dashed',
-    padding: 12,
+    borderWidth: 1,
+    borderColor: '#ffffff',
+    padding: 14,
     alignItems: 'center',
-    backgroundColor: '#002200',
+    backgroundColor: '#1a1a1a',
   },
   buttonText: {
-    color: '#00ff00',
-    fontFamily: 'monospace',
-    fontSize: 14,
+    color: '#ffffff',
+    fontFamily: 'PixelFont',
+    fontSize: 10,
+    letterSpacing: 1,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    backgroundColor: 'rgba(0, 0, 0, 0.95)',
     justifyContent: 'center',
     padding: 20,
   },
   modalBox: {
-    borderWidth: 2,
-    borderColor: '#00ff00',
-    borderStyle: 'dashed',
-    padding: 16,
-    backgroundColor: '#1a1a1a',
+    borderWidth: 1,
+    borderColor: '#333333',
+    padding: 20,
+    backgroundColor: '#0a0a0a',
   },
   modalTitle: {
-    color: '#00ff00',
-    fontFamily: 'monospace',
-    fontSize: 14,
-    marginBottom: 12,
+    color: '#ffffff',
+    fontFamily: 'PixelFont',
+    fontSize: 10,
+    letterSpacing: 2,
+    marginBottom: 16,
   },
   categoryItem: {
-    padding: 12,
+    padding: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#333',
+    borderBottomColor: '#1a1a1a',
   },
   categoryText: {
-    color: '#00ff00',
-    fontFamily: 'monospace',
+    color: '#cccccc',
+    fontFamily: 'UbuntuMono',
+    fontSize: 13,
+  },
+  closeButton: {
+    borderWidth: 1,
+    borderColor: '#ffffff',
+    padding: 14,
+    alignItems: 'center',
+    backgroundColor: '#1a1a1a',
+    marginTop: 12,
   },
 });

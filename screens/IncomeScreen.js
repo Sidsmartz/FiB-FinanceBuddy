@@ -62,14 +62,14 @@ export default function IncomeScreen() {
         <TextInput
           style={styles.input}
           placeholder="Source"
-          placeholderTextColor="#006600"
+          placeholderTextColor="#444444"
           value={source}
           onChangeText={setSource}
         />
         <TextInput
           style={styles.input}
           placeholder="Amount"
-          placeholderTextColor="#006600"
+          placeholderTextColor="#444444"
           value={amount}
           onChangeText={setAmount}
           keyboardType="numeric"
@@ -77,7 +77,7 @@ export default function IncomeScreen() {
         <TextInput
           style={styles.input}
           placeholder="Expected Date (e.g., End of March)"
-          placeholderTextColor="#006600"
+          placeholderTextColor="#444444"
           value={date}
           onChangeText={setDate}
         />
@@ -91,7 +91,7 @@ export default function IncomeScreen() {
         {incomeFlows.map(flow => (
           <View key={flow.id} style={styles.flowItem}>
             <Text style={styles.flowSource}>{flow.source}</Text>
-            <Text style={styles.flowAmount}>${flow.amount.toFixed(2)}</Text>
+            <Text style={styles.flowAmount}>₹{flow.amount.toFixed(2)}</Text>
             <Text style={styles.flowDate}>{flow.expectedDate}</Text>
             
             {flow.allocations.length > 0 && (
@@ -99,7 +99,7 @@ export default function IncomeScreen() {
                 <Text style={styles.allocTitle}>PLAN:</Text>
                 {flow.allocations.map((alloc, idx) => (
                   <Text key={idx} style={styles.allocText}>
-                    {alloc.type}: ${alloc.amount.toFixed(2)}
+                    {alloc.type}: ₹{alloc.amount.toFixed(2)}
                   </Text>
                 ))}
               </View>
@@ -135,7 +135,7 @@ export default function IncomeScreen() {
           <TextInput
             style={styles.input}
             placeholder="Savings Amount"
-            placeholderTextColor="#006600"
+            placeholderTextColor="#444444"
             value={savingsAlloc}
             onChangeText={setSavingsAlloc}
             keyboardType="numeric"
@@ -143,7 +143,7 @@ export default function IncomeScreen() {
           <TextInput
             style={styles.input}
             placeholder="Spend Amount"
-            placeholderTextColor="#006600"
+            placeholderTextColor="#444444"
             value={spendAlloc}
             onChangeText={setSpendAlloc}
             keyboardType="numeric"
@@ -160,101 +160,101 @@ export default function IncomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0a0a',
-    padding: 16,
+    backgroundColor: '#000000',
+    padding: 20,
   },
   box: {
-    borderWidth: 2,
-    borderColor: '#00ff00',
-    borderStyle: 'dashed',
-    padding: 16,
-    marginBottom: 16,
-    backgroundColor: '#1a1a1a',
-  },
-  title: {
-    color: '#00ff00',
-    fontFamily: 'monospace',
-    fontSize: 14,
-    marginBottom: 12,
-  },
-  input: {
-    borderWidth: 2,
-    borderColor: '#00ff00',
-    borderStyle: 'dashed',
-    padding: 12,
-    marginBottom: 12,
-    color: '#00ff00',
-    fontFamily: 'monospace',
+    borderWidth: 1,
+    borderColor: '#333333',
+    padding: 20,
+    marginBottom: 20,
     backgroundColor: '#0a0a0a',
   },
+  title: {
+    color: '#ffffff',
+    fontFamily: 'PixelFont',
+    fontSize: 10,
+    letterSpacing: 2,
+    marginBottom: 16,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#333333',
+    padding: 14,
+    marginBottom: 12,
+    color: '#ffffff',
+    fontFamily: 'UbuntuMono',
+    backgroundColor: '#000000',
+    fontSize: 13,
+  },
   button: {
-    borderWidth: 2,
-    borderColor: '#00ff00',
-    borderStyle: 'dashed',
-    padding: 12,
+    borderWidth: 1,
+    borderColor: '#ffffff',
+    padding: 14,
     alignItems: 'center',
-    backgroundColor: '#002200',
+    backgroundColor: '#1a1a1a',
   },
   buttonText: {
-    color: '#00ff00',
-    fontFamily: 'monospace',
-    fontSize: 14,
+    color: '#ffffff',
+    fontFamily: 'PixelFont',
+    fontSize: 10,
+    letterSpacing: 1,
   },
   flowItem: {
-    marginBottom: 16,
-    paddingBottom: 16,
+    marginBottom: 20,
+    paddingBottom: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#333',
+    borderBottomColor: '#1a1a1a',
   },
   flowSource: {
-    color: '#00ff00',
-    fontFamily: 'monospace',
-    fontSize: 16,
-    marginBottom: 4,
-  },
-  flowAmount: {
-    color: '#00ff00',
-    fontFamily: 'monospace',
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  flowDate: {
-    color: '#00ff00',
-    fontFamily: 'monospace',
+    color: '#ffffff',
+    fontFamily: 'PixelFont',
     fontSize: 12,
     marginBottom: 8,
   },
+  flowAmount: {
+    color: '#ffffff',
+    fontFamily: 'PixelFont',
+    fontSize: 20,
+    marginBottom: 8,
+  },
+  flowDate: {
+    color: '#cccccc',
+    fontFamily: 'UbuntuMono',
+    fontSize: 12,
+    marginBottom: 12,
+  },
   allocations: {
-    marginVertical: 8,
-    padding: 8,
+    marginVertical: 12,
+    padding: 12,
     borderWidth: 1,
-    borderColor: '#333',
-    borderStyle: 'dashed',
+    borderColor: '#1a1a1a',
+    backgroundColor: '#000000',
   },
   allocTitle: {
-    color: '#00ff00',
-    fontFamily: 'monospace',
+    color: '#ffffff',
+    fontFamily: 'PixelFont',
+    fontSize: 9,
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
+  allocText: {
+    color: '#cccccc',
+    fontFamily: 'UbuntuMono',
     fontSize: 12,
     marginBottom: 4,
   },
-  allocText: {
-    color: '#00ff00',
-    fontFamily: 'monospace',
-    fontSize: 12,
-  },
   smallButton: {
-    borderWidth: 2,
-    borderColor: '#00ff00',
-    borderStyle: 'dashed',
-    padding: 8,
+    borderWidth: 1,
+    borderColor: '#ffffff',
+    padding: 10,
     alignItems: 'center',
-    backgroundColor: '#002200',
+    backgroundColor: '#1a1a1a',
   },
   completedText: {
-    color: '#00ff00',
-    fontFamily: 'monospace',
-    fontSize: 14,
-    marginTop: 8,
+    color: '#ffffff',
+    fontFamily: 'PixelFont',
+    fontSize: 10,
+    marginTop: 12,
   },
 });

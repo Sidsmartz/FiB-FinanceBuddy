@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, Text, StyleSheet } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import * as Font from 'expo-font';
 import DashboardScreen from './screens/DashboardScreen';
 import ExpenseScreen from './screens/ExpenseScreen';
 import GoalsScreen from './screens/GoalsScreen';
@@ -10,13 +12,29 @@ import { DataProvider } from './context/DataContext';
 
 const Tab = createBottomTabNavigator();
 
-const TabIcon = ({ label, focused }) => (
-  <View style={[styles.tabIcon, focused && styles.tabIconFocused]}>
-    <Text style={styles.tabText}>{label}</Text>
-  </View>
-);
-
 export default function App() {
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
+  useEffect(() => {
+    async function loadFonts() {
+      try {
+        await Font.loadAsync({
+          'PixelFont': require('./assets/fonts/PixelFont.ttf'),
+          'UbuntuMono': require('./assets/fonts/UbuntuMono-Regular.ttf'),
+        });
+        setFontsLoaded(true);
+      } catch (error) {
+        console.error('Font loading error:', error);
+        setFontsLoaded(true); // Continue anyway
+      }
+    }
+    loadFonts();
+  }, []);
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
   return (
     <DataProvider>
       <NavigationContainer>
@@ -25,35 +43,44 @@ export default function App() {
             headerStyle: styles.header,
             headerTitleStyle: styles.headerTitle,
             tabBarStyle: styles.tabBar,
-            tabBarShowLabel: false,
+            tabBarActiveTintColor: '#ffffff',
+            tabBarInactiveTintColor: '#666666',
           }}
         >
           <Tab.Screen 
             name="Dashboard" 
             component={DashboardScreen}
             options={{
-              tabBarIcon: ({ focused }) => <TabIcon label="HOME" focused={focused} />
+              tabBarIcon: ({ color, size }) => (
+                <Ionicons name="home" size={size} color={color} />
+              ),
             }}
           />
           <Tab.Screen 
             name="Expense" 
             component={ExpenseScreen}
             options={{
-              tabBarIcon: ({ focused }) => <TabIcon label="EXPENSE" focused={focused} />
+              tabBarIcon: ({ color, size }) => (
+                <Ionicons name="wallet" size={size} color={color} />
+              ),
             }}
           />
           <Tab.Screen 
             name="Goals" 
             component={GoalsScreen}
             options={{
-              tabBarIcon: ({ focused }) => <TabIcon label="GOALS" focused={focused} />
+              tabBarIcon: ({ color, size }) => (
+                <Ionicons name="trophy" size={size} color={color} />
+              ),
             }}
           />
           <Tab.Screen 
             name="Income" 
             component={IncomeScreen}
             options={{
-              tabBarIcon: ({ focused }) => <TabIcon label="INCOME" focused={focused} />
+              tabBarIcon: ({ color, size }) => (
+                <Ionicons name="trending-up" size={size} color={color} />
+              ),
             }}
           />
         </Tab.Navigator>
@@ -64,35 +91,19 @@ export default function App() {
 
 const styles = StyleSheet.create({
   header: {
-    backgroundColor: '#1a1a1a',
-    borderBottomWidth: 2,
-    borderBottomColor: '#00ff00',
+    backgroundColor: '#000000',
+    borderBottomWidth: 1,
+    borderBottomColor: '#333333',
   },
   headerTitle: {
-    color: '#00ff00',
-    fontFamily: 'monospace',
+    color: '#ffffff',
+    fontFamily: 'PixelFont',
     fontSize: 16,
   },
   tabBar: {
-    backgroundColor: '#1a1a1a',
-    borderTopWidth: 2,
-    borderTopColor: '#00ff00',
+    backgroundColor: '#000000',
+    borderTopWidth: 1,
+    borderTopColor: '#333333',
     height: 60,
-  },
-  tabIcon: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderWidth: 2,
-    borderColor: '#333',
-    borderStyle: 'dashed',
-  },
-  tabIconFocused: {
-    borderColor: '#00ff00',
-    backgroundColor: '#002200',
-  },
-  tabText: {
-    color: '#00ff00',
-    fontFamily: 'monospace',
-    fontSize: 10,
   },
 });
