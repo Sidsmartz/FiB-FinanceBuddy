@@ -41,7 +41,7 @@ export const DataProvider = ({ children }) => {
   };
 
   const addExpense = (expense) => {
-    const newExpenses = [...expenses, { ...expense, id: Date.now(), date: new Date().toISOString() }];
+    const newExpenses = [...expenses, { ...expense, id: Date.now() }];
     setExpenses(newExpenses);
     setBalance(balance - expense.amount);
     saveData({ expenses: newExpenses, balance: balance - expense.amount, emergencySavings, goalSavings, incomeFlows });

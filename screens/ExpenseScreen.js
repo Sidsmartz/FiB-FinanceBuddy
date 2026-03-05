@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Modal } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Modal, Platform } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useData } from '../context/DataContext';
 import * as Animatable from 'react-native-animatable';
 import { useIsFocused } from '@react-navigation/native';
@@ -12,7 +13,9 @@ export default function ExpenseScreen() {
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('');
   const [split, setSplit] = useState('');
+  const [date, setDate] = useState(new Date());
   const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showDateModal, setShowDateModal] = useState(false);
   const [balanceAmount, setBalanceAmount] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
   const [animKey, setAnimKey] = useState(0);
@@ -35,12 +38,14 @@ export default function ExpenseScreen() {
       amount: parseFloat(amount),
       category,
       split: split ? parseFloat(split) : 0,
+      date: date.toISOString(),
     });
 
     setTitle('');
     setAmount('');
     setCategory('');
     setSplit('');
+    setDate(new Date());
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 2000);
   };
@@ -104,6 +109,30 @@ export default function ExpenseScreen() {
             {category || 'Select Category'}
           </Text>
         </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.input} 
+          onPress={() => setShowDateModal(true)}
+        >
+          <Text style={styles.inputText}>
+            {date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+          </Text>
+        </TouchableOpacity>
+
+        {showDateModal && (
+          <DateTimePicker
+            value={date}
+            mode="date"
+            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            onChange={(event, selectedDate) => {
+              setShowDateModal(Platform.OS === 'ios');
+              if (selectedDate) {
+                setDate(selectedDate);
+              }
+            }}
+            maximumDate={new Date()}
+          />
+        )}
 
         <TextInput
           style={styles.input}
