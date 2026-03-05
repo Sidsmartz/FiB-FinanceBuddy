@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Modal } from 'react-native';
 import { useData } from '../context/DataContext';
 import * as Animatable from 'react-native-animatable';
+import { useIsFocused } from '@react-navigation/native';
 
 const CATEGORIES = ['Books', 'Food', 'Gifts', 'Movies', 'Groceries', 'Transport', 'Entertainment', 'Others'];
 
@@ -14,6 +15,14 @@ export default function ExpenseScreen() {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [balanceAmount, setBalanceAmount] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
+  const [animKey, setAnimKey] = useState(0);
+  const isFocused = useIsFocused();
+
+  React.useEffect(() => {
+    if (isFocused) {
+      setAnimKey(prev => prev + 1);
+    }
+  }, [isFocused]);
 
   const handleAddExpense = () => {
     if (!title || !amount || !category) {
@@ -52,7 +61,7 @@ export default function ExpenseScreen() {
         </Animatable.View>
       )}
 
-      <Animatable.View animation="fadeInDown" delay={100} style={styles.box}>
+      <Animatable.View key={`balance-${animKey}`} animation="fadeInDown" delay={100} style={styles.box}>
         <Text style={styles.title}>ADD BALANCE.</Text>
         <TextInput
           style={styles.input}
@@ -67,7 +76,7 @@ export default function ExpenseScreen() {
         </TouchableOpacity>
       </Animatable.View>
 
-      <Animatable.View animation="fadeInUp" delay={200} style={styles.box}>
+      <Animatable.View key={`expense-${animKey}`} animation="fadeInUp" delay={200} style={styles.box}>
         <Text style={styles.title}>LOG EXPENSE.</Text>
         
         <TextInput

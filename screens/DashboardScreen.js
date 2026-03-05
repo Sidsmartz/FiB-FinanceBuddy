@@ -10,8 +10,8 @@ const CATEGORIES = ['Books', 'Food', 'Gifts', 'Movies', 'Groceries', 'Transport'
 const COLORS = ['#ffffff', '#cccccc', '#999999', '#666666', '#e0e0e0', '#b3b3b3', '#808080', '#4d4d4d'];
 
 const TapRupee = ({ x, y, id, onComplete }) => {
-  const translateY = useRef(new Animated.Value(0)).current;
-  const opacity = useRef(new Animated.Value(1)).current;
+  const [translateY] = useState(new Animated.Value(0));
+  const [opacity] = useState(new Animated.Value(1));
 
   useEffect(() => {
     Animated.parallel([
@@ -39,6 +39,7 @@ const TapRupee = ({ x, y, id, onComplete }) => {
           opacity,
           transform: [{ translateY }],
           zIndex: 1000,
+          pointerEvents: 'none',
         },
       ]}
     >
@@ -82,15 +83,15 @@ export default function DashboardScreen() {
   const handleTap = (event) => {
     const { locationX, locationY } = event.nativeEvent;
     const newRupee = {
-      id: Date.now(),
+      id: Date.now() + Math.random(), // Ensure unique ID
       x: locationX,
       y: locationY,
     };
-    setTapRupees([...tapRupees, newRupee]);
+    setTapRupees(prev => [...prev, newRupee]);
   };
 
   const removeRupee = (id) => {
-    setTapRupees(tapRupees.filter(r => r.id !== id));
+    setTapRupees(prev => prev.filter(r => r.id !== id));
   };
 
   useEffect(() => {

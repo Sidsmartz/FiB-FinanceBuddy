@@ -2,11 +2,20 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { useData } from '../context/DataContext';
 import * as Animatable from 'react-native-animatable';
+import { useIsFocused } from '@react-navigation/native';
 
 export default function GoalsScreen() {
   const { emergencySavings, goalSavings, updateEmergencySavings, addGoalSaving, updateGoalSaving } = useData();
   const [emergencyAmount, setEmergencyAmount] = useState('');
   const [savingsAmount, setSavingsAmount] = useState('');
+  const [animKey, setAnimKey] = useState(0);
+  const isFocused = useIsFocused();
+
+  React.useEffect(() => {
+    if (isFocused) {
+      setAnimKey(prev => prev + 1);
+    }
+  }, [isFocused]);
 
   // Calculate total general savings
   const totalSavings = goalSavings.reduce((sum, goal) => sum + goal.current, 0);
@@ -35,7 +44,7 @@ export default function GoalsScreen() {
 
   return (
     <ScrollView style={styles.container}>
-      <Animatable.View animation="fadeInDown" delay={100} style={styles.box}>
+      <Animatable.View key={`emergency-${animKey}`} animation="fadeInDown" delay={100} style={styles.box}>
         <Text style={styles.title}>EMERGENCY SAVINGS.</Text>
         <Text style={styles.amount}>₹{emergencySavings.toFixed(2)}</Text>
         <TextInput
@@ -51,7 +60,7 @@ export default function GoalsScreen() {
         </TouchableOpacity>
       </Animatable.View>
 
-      <Animatable.View animation="fadeInUp" delay={200} style={styles.box}>
+      <Animatable.View key={`savings-${animKey}`} animation="fadeInUp" delay={200} style={styles.box}>
         <Text style={styles.title}>SAVINGS.</Text>
         <Text style={styles.amount}>₹{totalSavings.toFixed(2)}</Text>
         <TextInput

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { useData } from '../context/DataContext';
 import * as Animatable from 'react-native-animatable';
+import { useIsFocused } from '@react-navigation/native';
 
 export default function IncomeScreen() {
   const { incomeFlows, addIncomeFlow, updateIncomeFlow } = useData();
@@ -11,6 +12,14 @@ export default function IncomeScreen() {
   const [selectedFlow, setSelectedFlow] = useState(null);
   const [savingsAlloc, setSavingsAlloc] = useState('');
   const [spendAlloc, setSpendAlloc] = useState('');
+  const [animKey, setAnimKey] = useState(0);
+  const isFocused = useIsFocused();
+
+  React.useEffect(() => {
+    if (isFocused) {
+      setAnimKey(prev => prev + 1);
+    }
+  }, [isFocused]);
 
   const handleAddIncome = () => {
     if (!source || !amount || !date) {
@@ -58,7 +67,7 @@ export default function IncomeScreen() {
 
   return (
     <ScrollView style={styles.container}>
-      <Animatable.View animation="fadeInDown" delay={100} style={styles.box}>
+      <Animatable.View key={`income-${animKey}`} animation="fadeInDown" delay={100} style={styles.box}>
         <Text style={styles.title}>ADD EXPECTED INCOME.</Text>
         <TextInput
           style={styles.input}
@@ -87,7 +96,7 @@ export default function IncomeScreen() {
         </TouchableOpacity>
       </Animatable.View>
 
-      <Animatable.View animation="fadeInUp" delay={200} style={styles.box}>
+      <Animatable.View key={`flows-${animKey}`} animation="fadeInUp" delay={200} style={styles.box}>
         <Text style={styles.title}>INCOME FLOWS.</Text>
         {incomeFlows.map(flow => (
           <View key={flow.id} style={styles.flowItem}>
@@ -131,7 +140,7 @@ export default function IncomeScreen() {
       </Animatable.View>
 
       {selectedFlow && (
-        <Animatable.View animation="fadeIn" style={styles.box}>
+        <Animatable.View key={`plan-${animKey}`} animation="fadeIn" style={styles.box}>
           <Text style={styles.title}>PLAN ALLOCATION.</Text>
           <TextInput
             style={styles.input}
