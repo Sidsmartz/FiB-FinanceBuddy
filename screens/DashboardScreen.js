@@ -1,5 +1,5 @@
 import React, { useMemo, useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions, Animated, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Dimensions, Animated, TouchableWithoutFeedback, TouchableOpacity } from 'react-native';
 import { PieChart, LineChart } from 'react-native-chart-kit';
 import { useData } from '../context/DataContext';
 import BongoCat from '../components/BongoCat';
@@ -49,15 +49,17 @@ const TapRupee = ({ x, y, id, onComplete }) => {
 };
 
 export default function DashboardScreen() {
-  const { expenses, balance } = useData();
+  const { expenses, savings, balance } = useData();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
   const [tapRupees, setTapRupees] = useState([]);
   const [animKey, setAnimKey] = useState(0);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [showMonthGraph, setShowMonthGraph] = useState(true);
   const isFocused = useIsFocused();
 
-  const currentMonth = new Date().getMonth();
-  const currentYear = new Date().getFullYear();
+  const isCurrentMonth = selectedYear === new Date().getFullYear() && selectedMonth === new Date().getMonth();
 
   useEffect(() => {
     if (isFocused) {
@@ -113,13 +115,51 @@ export default function DashboardScreen() {
   const monthlyExpenses = useMemo(() => {
     return expenses.filter(exp => {
       const expDate = new Date(exp.date);
-      return expDate.getMonth() === currentMonth && expDate.getFullYear() === currentYear;
+      return expDate.getMonth() === selectedMonth && expDate.getFullYear() === selectedYear;
     });
-  }, [expenses]);
+  }, [expenses, selectedMonth, selectedYear]);
+
+  const monthlySavings = useMemo(() => {
+    return savings.filter(sav => {
+      const savDate = new Date(sav.date);
+      return savDate.getMonth() === selectedMonth && savDate.getFullYear() === selectedYear;
+    });
+  }, [savings, selectedMonth, selectedYear]);
 
   const totalSpent = useMemo(() => {
     return monthlyExpenses.reduce((sum, exp) => sum + exp.amount, 0);
   }, [monthlyExpenses]);
+
+  const totalSaved = useMemo(() => {
+    return monthlySavings.reduce((sum, sav) => sum + sav.amount, 0);
+  }, [monthlySavings]);
+
+  const goToPreviousMonth = () => {
+    if (selectedMonth === 0) {
+      setSelectedMonth(11);
+      setSelectedYear(selectedYear - 1);
+    } else {
+      setSelectedMonth(selectedMonth - 1);
+    }
+  };
+
+  const goToNextMonth = () => {
+    const now = new Date();
+    if (selectedYear === now.getFullYear() && selectedMonth === now.getMonth()) {
+      return; // Don't go beyond current month
+    }
+    if (selectedMonth === 11) {
+      setSelectedMonth(0);
+      setSelectedYear(selectedYear + 1);
+    } else {
+      setSelectedMonth(selectedMonth + 1);
+    }
+  };
+
+  const getMonthLabel = () => {
+    const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+    return `${monthNames[selectedMonth]} ${selectedYear.toString().slice(-2)}`;
+  };
 
   const categoryData = useMemo(() => {
     const data = {};
@@ -135,7 +175,28 @@ export default function DashboardScreen() {
     })).filter(item => item.amount > 0);
   }, [monthlyExpenses]);
 
-  // Last 7 days spending data
+  // Full month spending data (for previous months)
+  const monthSpendingData = useMemo(() => {
+    const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
+    const days = [];
+    const amounts = [];
+    
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(selectedYear, selectedMonth, day);
+      const dayExpenses = monthlyExpenses.filter(exp => {
+        const expDate = new Date(exp.date);
+        return expDate.getDate() === day;
+      });
+      const total = dayExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+      
+      // Only show every 3rd day label to avoid crowding
+      days.push(day % 3 === 1 ? day.toString() : '');
+      amounts.push(total);
+    }
+    return { days, amounts };
+  }, [monthlyExpenses, selectedMonth, selectedYear]);
+
+  // Last 7 days spending data (for current month only)
   const last7DaysData = useMemo(() => {
     const days = [];
     const amounts = [];
@@ -162,23 +223,46 @@ export default function DashboardScreen() {
           ))}
           
           <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+          {/* Month Navigation */}
+          <Animatable.View key={`month-${animKey}`} animation="fadeInDown" delay={100} style={styles.monthNav}>
+            <TouchableOpacity onPress={goToPreviousMonth} style={styles.navButton}>
+              <Text style={styles.navArrow}>◄</Text>
+            </TouchableOpacity>
+            <Text style={styles.monthLabel}>{getMonthLabel()}</Text>
+            <TouchableOpacity 
+              onPress={goToNextMonth} 
+              style={styles.navButton}
+              disabled={selectedYear === new Date().getFullYear() && selectedMonth === new Date().getMonth()}
+            >
+              <Text style={[styles.navArrow, (selectedYear === new Date().getFullYear() && selectedMonth === new Date().getMonth()) && styles.navDisabled]}>►</Text>
+            </TouchableOpacity>
+          </Animatable.View>
+
           {/* Bongo Cat - separate from balance */}
           <Animatable.View key={`cat-${animKey}`} animation="bounceIn" duration={1500} style={styles.catContainer}>
             <BongoCat size={Dimensions.get('window').width * 0.6} />
           </Animatable.View>
 
-          {/* Balance box */}
-          <Animatable.View key={`balance-${animKey}`} animation="fadeInUp" delay={200} style={styles.box}>
-            <Text style={styles.title}>BALANCE.</Text>
-            <Text style={styles.amount}>₹{balance.toFixed(2)}</Text>
-          </Animatable.View>
+          {/* Balance box - only show for current month */}
+          {isCurrentMonth && (
+            <Animatable.View key={`balance-${animKey}`} animation="fadeInUp" delay={200} style={styles.box}>
+              <Text style={styles.title}>BALANCE.</Text>
+              <Text style={styles.amount}>₹{balance.toFixed(2)}</Text>
+            </Animatable.View>
+          )}
 
-          <Animatable.View key={`spent-${animKey}`} animation="fadeInUp" delay={400} style={styles.box}>
+          <Animatable.View key={`spent-${animKey}`} animation="fadeInUp" delay={isCurrentMonth ? 400 : 200} style={styles.box}>
             <Text style={styles.title}>SPENT THIS MONTH.</Text>
             <Text style={styles.amount}>₹{totalSpent.toFixed(2)}</Text>
         </Animatable.View>
 
-        {last7DaysData.amounts.some(a => a > 0) && (
+        <Animatable.View key={`saved-${animKey}`} animation="fadeInUp" delay={isCurrentMonth ? 500 : 300} style={styles.boxGreen}>
+            <Text style={styles.title}>SAVED THIS MONTH.</Text>
+            <Text style={styles.amountGreen}>₹{totalSaved.toFixed(2)}</Text>
+        </Animatable.View>
+
+        {/* Last 7 days - only for current month */}
+        {isCurrentMonth && last7DaysData.amounts.some(a => a > 0) && (
           <Animatable.View key={`chart-${animKey}`} animation="fadeInUp" delay={600} style={styles.box}>
             <Text style={styles.title}>LAST 7 DAYS SPENDING.</Text>
             <LineChart
@@ -208,8 +292,52 @@ export default function DashboardScreen() {
           </Animatable.View>
         )}
 
+        {/* Full month graph - with toggle */}
+        {showMonthGraph && monthSpendingData.amounts.some(a => a > 0) && (
+          <Animatable.View key={`monthchart-${animKey}`} animation="fadeInUp" delay={isCurrentMonth ? 700 : 400} style={styles.box}>
+            <View style={styles.chartHeader}>
+              <Text style={styles.title}>MONTHLY SPENDING.</Text>
+              <TouchableOpacity onPress={() => setShowMonthGraph(false)}>
+                <Text style={styles.toggleText}>HIDE</Text>
+              </TouchableOpacity>
+            </View>
+            <LineChart
+              data={{
+                labels: monthSpendingData.days,
+                datasets: [{ data: monthSpendingData.amounts.length > 0 ? monthSpendingData.amounts : [0] }],
+              }}
+              width={Dimensions.get('window').width - 80}
+              height={200}
+              chartConfig={{
+                backgroundColor: '#000000',
+                backgroundGradientFrom: '#0a0a0a',
+                backgroundGradientTo: '#1a1a1a',
+                decimalPlaces: 0,
+                color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                style: { borderRadius: 0 },
+                propsForDots: {
+                  r: '2',
+                  strokeWidth: '1',
+                  stroke: '#ffffff',
+                },
+              }}
+              bezier
+              style={styles.chart}
+            />
+          </Animatable.View>
+        )}
+
+        {!showMonthGraph && (
+          <Animatable.View key={`showgraph-${animKey}`} animation="fadeInUp" style={styles.boxToggle}>
+            <TouchableOpacity onPress={() => setShowMonthGraph(true)}>
+              <Text style={styles.toggleTextLarge}>SHOW MONTHLY GRAPH</Text>
+            </TouchableOpacity>
+          </Animatable.View>
+        )}
+
         {categoryData.length > 0 && (
-          <Animatable.View key={`pie-${animKey}`} animation="fadeInUp" delay={800} style={styles.box}>
+          <Animatable.View key={`pie-${animKey}`} animation="fadeInUp" delay={isCurrentMonth ? 800 : 500} style={styles.box}>
             <Text style={styles.title}>SPENDING BY CATEGORY.</Text>
             <PieChart
               data={categoryData}
@@ -227,21 +355,23 @@ export default function DashboardScreen() {
           </Animatable.View>
         )}
 
-        <Animatable.View key={`recent-${animKey}`} animation="fadeInUp" delay={1000} style={styles.boxGray}>
-          <Text style={styles.title}>RECENT EXPENSES.</Text>
+        <Animatable.View key={`recent-${animKey}`} animation="fadeInUp" delay={isCurrentMonth ? 1000 : 600} style={styles.boxGray}>
+          <Text style={styles.title}>{isCurrentMonth ? 'RECENT EXPENSES.' : 'TRANSACTIONS.'}</Text>
           {monthlyExpenses.length === 0 ? (
             <Text style={styles.emptyText}>No expenses yet</Text>
           ) : (
-            monthlyExpenses.slice(-5).reverse().map((exp, idx) => (
+            monthlyExpenses.slice(isCurrentMonth ? -5 : 0).reverse().map((exp, idx) => (
               <Animatable.View 
                 key={exp.id} 
                 animation="fadeInRight" 
-                delay={1100 + (idx * 100)}
+                delay={(isCurrentMonth ? 1100 : 700) + (idx * 100)}
                 style={styles.expenseItem}
               >
                 <View>
                   <Text style={styles.expenseText}>{exp.title}</Text>
-                  <Text style={styles.expenseCategory}>{exp.category}</Text>
+                  <Text style={styles.expenseCategory}>
+                    {exp.category} • {new Date(exp.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                  </Text>
                 </View>
                 <Text style={styles.expenseAmount}>₹{exp.amount}</Text>
               </Animatable.View>
@@ -273,12 +403,27 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     backgroundColor: '#0a0a0a',
   },
+  boxGreen: {
+    borderWidth: 1,
+    borderColor: '#4ade80',
+    padding: 20,
+    marginBottom: 16,
+    backgroundColor: '#0a0a0a',
+  },
   boxGray: {
     borderWidth: 1,
     borderColor: '#333333',
     padding: 20,
     marginBottom: 16,
     backgroundColor: '#0a0a0a',
+  },
+  boxToggle: {
+    borderWidth: 1,
+    borderColor: '#333333',
+    padding: 20,
+    marginBottom: 16,
+    backgroundColor: '#0a0a0a',
+    alignItems: 'center',
   },
   title: {
     color: '#ffffff',
@@ -287,10 +432,60 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
     marginBottom: 12,
   },
+  chartHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  toggleText: {
+    color: '#666666',
+    fontFamily: 'PixelFont',
+    fontSize: 8,
+    letterSpacing: 1,
+  },
+  toggleTextLarge: {
+    color: '#666666',
+    fontFamily: 'PixelFont',
+    fontSize: 10,
+    letterSpacing: 2,
+  },
   amount: {
     color: '#7eb8ff',
     fontFamily: 'PixelFont',
     fontSize: 24,
+  },
+  amountGreen: {
+    color: '#4ade80',
+    fontFamily: 'PixelFont',
+    fontSize: 24,
+  },
+  monthNav: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#333333',
+    padding: 16,
+    marginBottom: 16,
+    backgroundColor: '#0a0a0a',
+  },
+  monthLabel: {
+    color: '#ffffff',
+    fontFamily: 'PixelFont',
+    fontSize: 14,
+    letterSpacing: 2,
+  },
+  navButton: {
+    padding: 8,
+  },
+  navArrow: {
+    color: '#ffffff',
+    fontFamily: 'PixelFont',
+    fontSize: 16,
+  },
+  navDisabled: {
+    color: '#333333',
   },
   chart: {
     marginVertical: 8,

@@ -7,6 +7,8 @@ export const useData = () => useContext(DataContext);
 
 export const DataProvider = ({ children }) => {
   const [expenses, setExpenses] = useState([]);
+  const [savings, setSavings] = useState([]);
+  const [savingsGoals, setSavingsGoals] = useState([]);
   const [balance, setBalance] = useState(0);
   const [emergencySavings, setEmergencySavings] = useState(0);
   const [goalSavings, setGoalSavings] = useState([]);
@@ -22,6 +24,8 @@ export const DataProvider = ({ children }) => {
       if (data) {
         const parsed = JSON.parse(data);
         setExpenses(parsed.expenses || []);
+        setSavings(parsed.savings || []);
+        setSavingsGoals(parsed.savingsGoals || []);
         setBalance(parsed.balance || 0);
         setEmergencySavings(parsed.emergencySavings || 0);
         setGoalSavings(parsed.goalSavings || []);
@@ -44,24 +48,54 @@ export const DataProvider = ({ children }) => {
     const newExpenses = [...expenses, { ...expense, id: Date.now() }];
     setExpenses(newExpenses);
     setBalance(balance - expense.amount);
-    saveData({ expenses: newExpenses, balance: balance - expense.amount, emergencySavings, goalSavings, incomeFlows });
+    saveData({ expenses: newExpenses, savings, savingsGoals, balance: balance - expense.amount, emergencySavings, goalSavings, incomeFlows });
+  };
+
+  const addSaving = (saving) => {
+    const newSavings = [...savings, { ...saving, id: Date.now() }];
+    setSavings(newSavings);
+    setBalance(balance - saving.amount);
+    
+    // Update the savings goal amount
+    if (saving.goalId) {
+      const newGoals = savingsGoals.map(g => 
+        g.id === saving.goalId ? { ...g, current: g.current + saving.amount } : g
+      );
+      setSavingsGoals(newGoals);
+      saveData({ expenses, savings: newSavings, savingsGoals: newGoals, balance: balance - saving.amount, emergencySavings, goalSavings, incomeFlows });
+    } else {
+      saveData({ expenses, savings: newSavings, savingsGoals, balance: balance - saving.amount, emergencySavings, goalSavings, incomeFlows });
+    }
+  };
+
+  const createSavingsGoal = (goal) => {
+    const newGoal = { ...goal, id: Date.now(), current: 0 };
+    const newGoals = [...savingsGoals, newGoal];
+    setSavingsGoals(newGoals);
+    saveData({ expenses, savings, savingsGoals: newGoals, balance, emergencySavings, goalSavings, incomeFlows });
+  };
+
+  const deleteSavingsGoal = (id) => {
+    const newGoals = savingsGoals.filter(g => g.id !== id);
+    setSavingsGoals(newGoals);
+    saveData({ expenses, savings, savingsGoals: newGoals, balance, emergencySavings, goalSavings, incomeFlows });
   };
 
   const addBalance = (amount) => {
     const newBalance = balance + amount;
     setBalance(newBalance);
-    saveData({ expenses, balance: newBalance, emergencySavings, goalSavings, incomeFlows });
+    saveData({ expenses, savings, savingsGoals, balance: newBalance, emergencySavings, goalSavings, incomeFlows });
   };
 
   const updateEmergencySavings = (amount) => {
     setEmergencySavings(amount);
-    saveData({ expenses, balance, emergencySavings: amount, goalSavings, incomeFlows });
+    saveData({ expenses, savings, savingsGoals, balance, emergencySavings: amount, goalSavings, incomeFlows });
   };
 
   const addGoalSaving = (goal) => {
     const newGoals = [...goalSavings, { ...goal, id: Date.now(), current: 0 }];
     setGoalSavings(newGoals);
-    saveData({ expenses, balance, emergencySavings, goalSavings: newGoals, incomeFlows });
+    saveData({ expenses, savings, savingsGoals, balance, emergencySavings, goalSavings: newGoals, incomeFlows });
   };
 
   const updateGoalSaving = (id, amount) => {
@@ -69,13 +103,13 @@ export const DataProvider = ({ children }) => {
       g.id === id ? { ...g, current: g.current + amount } : g
     );
     setGoalSavings(newGoals);
-    saveData({ expenses, balance, emergencySavings, goalSavings: newGoals, incomeFlows });
+    saveData({ expenses, savings, savingsGoals, balance, emergencySavings, goalSavings: newGoals, incomeFlows });
   };
 
   const addIncomeFlow = (flow) => {
     const newFlows = [...incomeFlows, { ...flow, id: Date.now() }];
     setIncomeFlows(newFlows);
-    saveData({ expenses, balance, emergencySavings, goalSavings, incomeFlows: newFlows });
+    saveData({ expenses, savings, savingsGoals, balance, emergencySavings, goalSavings, incomeFlows: newFlows });
   };
 
   const updateIncomeFlow = (id, updates) => {
@@ -83,17 +117,22 @@ export const DataProvider = ({ children }) => {
       f.id === id ? { ...f, ...updates } : f
     );
     setIncomeFlows(newFlows);
-    saveData({ expenses, balance, emergencySavings, goalSavings, incomeFlows: newFlows });
+    saveData({ expenses, savings, savingsGoals, balance, emergencySavings, goalSavings, incomeFlows: newFlows });
   };
 
   return (
     <DataContext.Provider value={{
       expenses,
+      savings,
+      savingsGoals,
       balance,
       emergencySavings,
       goalSavings,
       incomeFlows,
       addExpense,
+      addSaving,
+      createSavingsGoal,
+      deleteSavingsGoal,
       addBalance,
       updateEmergencySavings,
       addGoalSaving,
