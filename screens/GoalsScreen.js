@@ -20,24 +20,47 @@ export default function GoalsScreen() {
   // Calculate total general savings
   const totalSavings = goalSavings.reduce((sum, goal) => sum + goal.current, 0);
 
-  const handleUpdateEmergency = () => {
+  const handleUpdateEmergency = (isAdd = true) => {
     if (!emergencyAmount) return;
-    updateEmergencySavings(emergencySavings + parseFloat(emergencyAmount));
+    const amount = parseFloat(emergencyAmount);
+    if (isAdd) {
+      updateEmergencySavings(emergencySavings + amount);
+    } else {
+      const newAmount = emergencySavings - amount;
+      if (newAmount < 0) {
+        alert('Cannot remove more than available');
+        return;
+      }
+      updateEmergencySavings(newAmount);
+    }
     setEmergencyAmount('');
   };
 
-  const handleAddSavings = () => {
+  const handleUpdateSavings = (isAdd = true) => {
     if (!savingsAmount) return;
-    // Add to general savings (create a single "Savings" goal if it doesn't exist)
+    const amount = parseFloat(savingsAmount);
     const savingsGoal = goalSavings.find(g => g.name === 'Savings');
-    if (savingsGoal) {
-      updateGoalSaving(savingsGoal.id, parseFloat(savingsAmount));
+    
+    if (isAdd) {
+      if (savingsGoal) {
+        updateGoalSaving(savingsGoal.id, amount);
+      } else {
+        addGoalSaving({
+          name: 'Savings',
+          target: 999999999,
+        });
+      }
     } else {
-      addGoalSaving({
-        name: 'Savings',
-        target: 999999999, // Large number for general savings
-      });
-      // Will need to add amount in next interaction
+      if (!savingsGoal) {
+        alert('No savings to remove from');
+        return;
+      }
+      const newAmount = savingsGoal.current - amount;
+      if (newAmount < 0) {
+        alert('Cannot remove more than available');
+        return;
+      }
+      updateGoalSaving(savingsGoal.id, -amount);
     }
     setSavingsAmount('');
   };
@@ -49,15 +72,20 @@ export default function GoalsScreen() {
         <Text style={styles.amount}>₹{emergencySavings.toFixed(2)}</Text>
         <TextInput
           style={styles.input}
-          placeholder="Add Amount"
+          placeholder="Amount"
           placeholderTextColor="#666666"
           value={emergencyAmount}
           onChangeText={setEmergencyAmount}
           keyboardType="numeric"
         />
-        <TouchableOpacity style={styles.button} onPress={handleUpdateEmergency}>
-          <Text style={styles.buttonText}>ADD</Text>
-        </TouchableOpacity>
+        <View style={styles.buttonRow}>
+          <TouchableOpacity style={styles.buttonHalf} onPress={() => handleUpdateEmergency(true)}>
+            <Text style={styles.buttonText}>ADD</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.buttonHalf, styles.buttonRemove]} onPress={() => handleUpdateEmergency(false)}>
+            <Text style={styles.buttonText}>REMOVE</Text>
+          </TouchableOpacity>
+        </View>
       </Animatable.View>
 
       <Animatable.View key={`savings-${animKey}`} animation="fadeInUp" delay={200} style={styles.box}>
@@ -65,15 +93,20 @@ export default function GoalsScreen() {
         <Text style={styles.amount}>₹{totalSavings.toFixed(2)}</Text>
         <TextInput
           style={styles.input}
-          placeholder="Add Amount"
+          placeholder="Amount"
           placeholderTextColor="#666666"
           value={savingsAmount}
           onChangeText={setSavingsAmount}
           keyboardType="numeric"
         />
-        <TouchableOpacity style={styles.button} onPress={handleAddSavings}>
-          <Text style={styles.buttonText}>ADD</Text>
-        </TouchableOpacity>
+        <View style={styles.buttonRow}>
+          <TouchableOpacity style={styles.buttonHalf} onPress={() => handleUpdateSavings(true)}>
+            <Text style={styles.buttonText}>ADD</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.buttonHalf, styles.buttonRemove]} onPress={() => handleUpdateSavings(false)}>
+            <Text style={styles.buttonText}>REMOVE</Text>
+          </TouchableOpacity>
+        </View>
       </Animatable.View>
     </ScrollView>
   );
@@ -121,6 +154,21 @@ const styles = StyleSheet.create({
     padding: 14,
     alignItems: 'center',
     backgroundColor: '#1a1a1a',
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  buttonHalf: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#ffffff',
+    padding: 14,
+    alignItems: 'center',
+    backgroundColor: '#1a1a1a',
+  },
+  buttonRemove: {
+    borderColor: '#ff6b6b',
   },
   buttonText: {
     color: '#ffffff',
