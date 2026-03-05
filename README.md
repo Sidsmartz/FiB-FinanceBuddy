@@ -11,32 +11,37 @@ FiB (Finance Buddy) is a minimalist, pixel-art themed mobile finance tracker bui
 ### 🏠 Dashboard
 - **Current Balance Display**: See your available funds at a glance
 - **Monthly Spending Summary**: Track total expenses for the current month
-- **7-Day Spending Trend**: Interactive line chart showing daily spending patterns
+- **Monthly Savings Display**: See how much you've saved this month
+- **Month Navigation**: Browse through previous months with arrow buttons
+- **7-Day Spending Trend**: Interactive line chart showing daily spending patterns (current month only)
+- **Monthly Spending Graph**: Full month spending visualization (toggleable)
 - **Category Breakdown**: Animated pie chart with expense distribution by category
 - **Interactive Rupee Animation**: Tap anywhere to create floating rupee symbols (₹)
 - **Animated Cat Companion**: A friendly pixel cat that keeps you company
 - **Screen Focus Animations**: Smooth fade-in animations replay every time you navigate to a screen
 
-### 💰 Expense Tracking
+### 💰 Expense & Savings Tracking
 - **Add Balance**: Quick balance top-up with success feedback
+- **Add to Savings**: Save money to specific goals with date tracking
 - **Log Expenses**: Record expenses with:
   - Title/description
   - Amount (₹)
   - Category selection (modal picker)
+  - Date picker (log past transactions)
   - Split tracking (optional)
 - **Categories**: Books, Food, Gifts, Movies, Groceries, Transport, Entertainment, Others
-- **Real-time Updates**: Balance automatically adjusts when expenses are logged
+- **Real-time Updates**: Balance automatically adjusts when expenses or savings are logged
 - **Animated UI**: Smooth transitions and micro-interactions
 
-### 🎯 Goals & Savings
-- **Emergency Savings**: Track your emergency fund with progress display
-- **Custom Goal Savings**: Create multiple savings goals with:
-  - Goal name
-  - Target amount
-  - Current progress
-  - Visual progress bars
-  - Incremental contributions
-- **Progress Tracking**: See how close you are to reaching each goal
+### 🎯 Savings Goals
+- **Create Custom Goals**: Set up multiple savings goals with:
+  - Goal name (e.g., Vacation, New Phone, Emergency Fund)
+  - Optional target amount
+  - Progress tracking
+- **Add to Goals**: Contribute to specific goals from the Expense screen
+- **Visual Progress**: See progress bars and percentages for goals with targets
+- **Total Savings Display**: View your total saved amount across all goals
+- **Goal Management**: Delete goals you no longer need
 
 ### 📈 Income Planning
 - **Expected Income Tracking**: Log future income sources with:
@@ -44,8 +49,8 @@ FiB (Finance Buddy) is a minimalist, pixel-art themed mobile finance tracker bui
   - Expected amount
   - Expected date
 - **Allocation Planning**: Plan how to split income between:
-  - Savings allocation (%)
-  - Spending allocation (%)
+  - Savings allocation
+  - Spending allocation
 - **Income Flow Management**: View and manage all expected income streams
 
 ## Tech Stack
@@ -64,6 +69,7 @@ FiB (Finance Buddy) is a minimalist, pixel-art themed mobile finance tracker bui
 - **react-native-chart-kit** (6.12.0) - Line and pie charts
 - **react-native-svg** (15.9.0) - SVG rendering for charts
 - **@expo/vector-icons** (15.1.1) - Ionicons for navigation
+- **@react-native-community/datetimepicker** - Native date picker
 
 ### Fonts
 - **Press Start 2P** (PixelFont.ttf) - Retro pixel font for headings
@@ -72,10 +78,9 @@ FiB (Finance Buddy) is a minimalist, pixel-art themed mobile finance tracker bui
 ### Data & Storage
 - **AsyncStorage** (@react-native-async-storage/async-storage 2.1.0) - Local data persistence
 - **Context API** - Global state management
-- **axios** (1.7.9) - HTTP client (ready for future backend integration)
 
 ### Design System
-- **Color Scheme**: Minimal dark theme (black/white/gray with blue accents)
+- **Color Scheme**: Minimal dark theme (black/white/gray with blue and green accents)
 - **Typography**: Pixel font for personality, monospace for readability
 - **Layout**: Clean borders, proper spacing, card-based UI
 - **Currency**: Indian Rupees (₹)
@@ -84,10 +89,10 @@ FiB (Finance Buddy) is a minimalist, pixel-art themed mobile finance tracker bui
 
 ### State Management
 - **DataContext**: Centralized state using React Context API
-  - Expenses array with timestamps
+  - Expenses array with timestamps and dates
+  - Savings array with goal references
+  - Savings goals array with progress tracking
   - Current balance
-  - Emergency savings amount
-  - Goal savings array
   - Income flows array
   - CRUD operations for all data types
 
@@ -98,18 +103,18 @@ FiB (Finance Buddy) is a minimalist, pixel-art themed mobile finance tracker bui
 ```javascript
 {
   expenses: [{ id, title, amount, category, split, date }],
+  savings: [{ id, title, amount, date, goalId }],
+  savingsGoals: [{ id, name, target, current }],
   balance: number,
-  emergencySavings: number,
-  goalSavings: [{ id, name, target, current }],
-  incomeFlows: [{ id, source, amount, date, savingsAlloc, spendAlloc }]
+  incomeFlows: [{ id, source, amount, expectedDate, allocations, completed }]
 }
 ```
 
 ### Screen Structure
 - **App.js**: Navigation setup, font loading, header configuration
-- **DashboardScreen**: Charts, balance display, cat animation, tap-to-create rupees
-- **ExpenseScreen**: Balance management and expense logging
-- **GoalsScreen**: Emergency and goal savings tracking
+- **DashboardScreen**: Charts, balance display, month navigation, cat animation, tap-to-create rupees
+- **ExpenseScreen**: Balance management, savings, and expense logging
+- **GoalsScreen**: Savings goals creation and tracking
 - **IncomeScreen**: Income planning and allocation
 - **BongoCat.js**: Animated pixel cat component
 - **DataContext.js**: Global state and AsyncStorage integration
@@ -164,10 +169,7 @@ npm run web      # Start in web browser
 
 ## Building for Production
 
-See [BUILD_APK.md](BUILD_APK.md) for detailed instructions on:
-- Building APK for Android using EAS Build
-- Local storage setup (no backend needed)
-- Optional cloud database integration for multi-device sync
+See [BUILD_APK.md](BUILD_APK.md) for detailed instructions on building an APK for Android using EAS Build.
 
 ## Project Structure
 
@@ -176,7 +178,9 @@ finance-tracker/
 ├── App.js                      # Main app entry, navigation setup
 ├── index.js                    # Expo entry point
 ├── app.json                    # Expo configuration
+├── eas.json                    # EAS Build configuration
 ├── package.json                # Dependencies
+├── BUILD_APK.md                # Build instructions
 ├── assets/
 │   ├── fonts/
 │   │   ├── PixelFont.ttf      # Press Start 2P font
@@ -188,13 +192,11 @@ finance-tracker/
 │   └── BongoCat.js            # Animated cat component
 ├── context/
 │   └── DataContext.js         # Global state management
-├── screens/
-│   ├── DashboardScreen.js     # Home screen with charts
-│   ├── ExpenseScreen.js       # Expense logging
-│   ├── GoalsScreen.js         # Savings goals
-│   └── IncomeScreen.js        # Income planning
-├── config/                     # Configuration files (future backend)
-└── backend/                    # Backend code (optional)
+└── screens/
+    ├── DashboardScreen.js     # Home screen with charts
+    ├── ExpenseScreen.js       # Expense and savings logging
+    ├── GoalsScreen.js         # Savings goals management
+    └── IncomeScreen.js        # Income planning
 ```
 
 ## Design Philosophy
@@ -207,25 +209,10 @@ FiB embraces a minimal, retro aesthetic with modern UX principles:
 - **Offline First**: Works perfectly without internet connection
 - **Simple & Focused**: No feature bloat, just what you need
 
-## Future Enhancements (Optional)
-
-### MongoDB Integration
-To add cloud sync across devices:
-1. Set up MongoDB Atlas or local MongoDB instance
-2. Create a backend API (Node.js/Express recommended)
-3. Update `config/mongodb.js` with your API endpoint
-4. Uncomment the sync line in `context/DataContext.js`
-
-Example backend endpoints needed:
-- `POST /sync` - Sync all data
-- `GET /data/:userId` - Fetch user data
-
-See [BUILD_APK.md](BUILD_APK.md) for free hosting options (Railway, Render, Vercel).
-
 ## Data Privacy
 
 - All financial data is stored locally on your device using AsyncStorage
-- No data is sent to external servers (unless you set up optional cloud sync)
+- No data is sent to external servers
 - No analytics or tracking
 - No account required
 - Your money, your data, your privacy
