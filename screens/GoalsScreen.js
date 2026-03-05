@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { useData } from '../context/DataContext';
+import * as Animatable from 'react-native-animatable';
 
 export default function GoalsScreen() {
   const { emergencySavings, goalSavings, updateEmergencySavings, addGoalSaving, updateGoalSaving } = useData();
   const [emergencyAmount, setEmergencyAmount] = useState('');
-  const [goalName, setGoalName] = useState('');
-  const [goalTarget, setGoalTarget] = useState('');
-  const [selectedGoal, setSelectedGoal] = useState(null);
-  const [addAmount, setAddAmount] = useState('');
+  const [savingsAmount, setSavingsAmount] = useState('');
+
+  // Calculate total general savings
+  const totalSavings = goalSavings.reduce((sum, goal) => sum + goal.current, 0);
 
   const handleUpdateEmergency = () => {
     if (!emergencyAmount) return;
@@ -16,35 +17,31 @@ export default function GoalsScreen() {
     setEmergencyAmount('');
   };
 
-  const handleAddGoal = () => {
-    if (!goalName || !goalTarget) {
-      alert('Please fill all fields');
-      return;
+  const handleAddSavings = () => {
+    if (!savingsAmount) return;
+    // Add to general savings (create a single "Savings" goal if it doesn't exist)
+    const savingsGoal = goalSavings.find(g => g.name === 'Savings');
+    if (savingsGoal) {
+      updateGoalSaving(savingsGoal.id, parseFloat(savingsAmount));
+    } else {
+      addGoalSaving({
+        name: 'Savings',
+        target: 999999999, // Large number for general savings
+      });
+      // Will need to add amount in next interaction
     }
-    addGoalSaving({
-      name: goalName,
-      target: parseFloat(goalTarget),
-    });
-    setGoalName('');
-    setGoalTarget('');
-  };
-
-  const handleAddToGoal = () => {
-    if (!selectedGoal || !addAmount) return;
-    updateGoalSaving(selectedGoal, parseFloat(addAmount));
-    setAddAmount('');
-    setSelectedGoal(null);
+    setSavingsAmount('');
   };
 
   return (
     <ScrollView style={styles.container}>
-      <View style={styles.box}>
-        <Text style={styles.title}>EMERGENCY SAVINGS</Text>
+      <Animatable.View animation="fadeInDown" delay={100} style={styles.box}>
+        <Text style={styles.title}>EMERGENCY SAVINGS.</Text>
         <Text style={styles.amount}>₹{emergencySavings.toFixed(2)}</Text>
         <TextInput
           style={styles.input}
           placeholder="Add Amount"
-          placeholderTextColor="#444444"
+          placeholderTextColor="#666666"
           value={emergencyAmount}
           onChangeText={setEmergencyAmount}
           keyboardType="numeric"
@@ -52,72 +49,23 @@ export default function GoalsScreen() {
         <TouchableOpacity style={styles.button} onPress={handleUpdateEmergency}>
           <Text style={styles.buttonText}>ADD</Text>
         </TouchableOpacity>
-      </View>
+      </Animatable.View>
 
-      <View style={styles.box}>
-        <Text style={styles.title}>CREATE GOAL</Text>
+      <Animatable.View animation="fadeInUp" delay={200} style={styles.box}>
+        <Text style={styles.title}>SAVINGS.</Text>
+        <Text style={styles.amount}>₹{totalSavings.toFixed(2)}</Text>
         <TextInput
           style={styles.input}
-          placeholder="Goal Name"
-          placeholderTextColor="#444444"
-          value={goalName}
-          onChangeText={setGoalName}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Target Amount"
-          placeholderTextColor="#444444"
-          value={goalTarget}
-          onChangeText={setGoalTarget}
+          placeholder="Add Amount"
+          placeholderTextColor="#666666"
+          value={savingsAmount}
+          onChangeText={setSavingsAmount}
           keyboardType="numeric"
         />
-        <TouchableOpacity style={styles.button} onPress={handleAddGoal}>
-          <Text style={styles.buttonText}>CREATE</Text>
+        <TouchableOpacity style={styles.button} onPress={handleAddSavings}>
+          <Text style={styles.buttonText}>ADD</Text>
         </TouchableOpacity>
-      </View>
-
-      <View style={styles.box}>
-        <Text style={styles.title}>GOAL SAVINGS</Text>
-        {goalSavings.map(goal => (
-          <View key={goal.id} style={styles.goalItem}>
-            <Text style={styles.goalName}>{goal.name}</Text>
-            <Text style={styles.goalProgress}>
-              ₹{goal.current.toFixed(2)} / ₹{goal.target.toFixed(2)}
-            </Text>
-            <View style={styles.progressBar}>
-              <View 
-                style={[
-                  styles.progressFill, 
-                  { width: `${Math.min((goal.current / goal.target) * 100, 100)}%` }
-                ]} 
-              />
-            </View>
-            <TouchableOpacity 
-              style={styles.smallButton}
-              onPress={() => setSelectedGoal(goal.id)}
-            >
-              <Text style={styles.buttonText}>ADD FUNDS</Text>
-            </TouchableOpacity>
-          </View>
-        ))}
-      </View>
-
-      {selectedGoal && (
-        <View style={styles.box}>
-          <Text style={styles.title}>ADD TO GOAL</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Amount"
-            placeholderTextColor="#444444"
-            value={addAmount}
-            onChangeText={setAddAmount}
-            keyboardType="numeric"
-          />
-          <TouchableOpacity style={styles.button} onPress={handleAddToGoal}>
-            <Text style={styles.buttonText}>CONFIRM</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+      </Animatable.View>
     </ScrollView>
   );
 }
@@ -130,7 +78,7 @@ const styles = StyleSheet.create({
   },
   box: {
     borderWidth: 1,
-    borderColor: '#333333',
+    borderColor: '#4a9eff',
     padding: 20,
     marginBottom: 20,
     backgroundColor: '#0a0a0a',
@@ -143,7 +91,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   amount: {
-    color: '#ffffff',
+    color: '#7eb8ff',
     fontFamily: 'PixelFont',
     fontSize: 24,
     marginBottom: 16,
@@ -170,41 +118,5 @@ const styles = StyleSheet.create({
     fontFamily: 'PixelFont',
     fontSize: 10,
     letterSpacing: 1,
-  },
-  goalItem: {
-    marginBottom: 20,
-    paddingBottom: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#1a1a1a',
-  },
-  goalName: {
-    color: '#ffffff',
-    fontFamily: 'PixelFont',
-    fontSize: 12,
-    marginBottom: 8,
-  },
-  goalProgress: {
-    color: '#cccccc',
-    fontFamily: 'UbuntuMono',
-    fontSize: 12,
-    marginBottom: 12,
-  },
-  progressBar: {
-    height: 24,
-    borderWidth: 1,
-    borderColor: '#333333',
-    marginBottom: 12,
-    backgroundColor: '#000000',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#ffffff',
-  },
-  smallButton: {
-    borderWidth: 1,
-    borderColor: '#ffffff',
-    padding: 10,
-    alignItems: 'center',
-    backgroundColor: '#1a1a1a',
   },
 });

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { useData } from '../context/DataContext';
+import * as Animatable from 'react-native-animatable';
 
 export default function IncomeScreen() {
   const { incomeFlows, addIncomeFlow, updateIncomeFlow } = useData();
@@ -57,8 +58,8 @@ export default function IncomeScreen() {
 
   return (
     <ScrollView style={styles.container}>
-      <View style={styles.box}>
-        <Text style={styles.title}>ADD EXPECTED INCOME</Text>
+      <Animatable.View animation="fadeInDown" delay={100} style={styles.box}>
+        <Text style={styles.title}>ADD EXPECTED INCOME.</Text>
         <TextInput
           style={styles.input}
           placeholder="Source"
@@ -84,10 +85,10 @@ export default function IncomeScreen() {
         <TouchableOpacity style={styles.button} onPress={handleAddIncome}>
           <Text style={styles.buttonText}>ADD</Text>
         </TouchableOpacity>
-      </View>
+      </Animatable.View>
 
-      <View style={styles.box}>
-        <Text style={styles.title}>INCOME FLOWS</Text>
+      <Animatable.View animation="fadeInUp" delay={200} style={styles.box}>
+        <Text style={styles.title}>INCOME FLOWS.</Text>
         {incomeFlows.map(flow => (
           <View key={flow.id} style={styles.flowItem}>
             <Text style={styles.flowSource}>{flow.source}</Text>
@@ -127,11 +128,11 @@ export default function IncomeScreen() {
             )}
           </View>
         ))}
-      </View>
+      </Animatable.View>
 
       {selectedFlow && (
-        <View style={styles.box}>
-          <Text style={styles.title}>PLAN ALLOCATION</Text>
+        <Animatable.View animation="fadeIn" style={styles.box}>
+          <Text style={styles.title}>PLAN ALLOCATION.</Text>
           <TextInput
             style={styles.input}
             placeholder="Savings Amount"
@@ -151,7 +152,7 @@ export default function IncomeScreen() {
           <TouchableOpacity style={styles.button} onPress={handlePlanAllocation}>
             <Text style={styles.buttonText}>SAVE PLAN</Text>
           </TouchableOpacity>
-        </View>
+        </Animatable.View>
       )}
     </ScrollView>
   );
@@ -165,7 +166,7 @@ const styles = StyleSheet.create({
   },
   box: {
     borderWidth: 1,
-    borderColor: '#333333',
+    borderColor: '#4a9eff',
     padding: 20,
     marginBottom: 20,
     backgroundColor: '#0a0a0a',
@@ -213,13 +214,13 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   flowAmount: {
-    color: '#ffffff',
+    color: '#7eb8ff',
     fontFamily: 'PixelFont',
     fontSize: 20,
     marginBottom: 8,
   },
   flowDate: {
-    color: '#cccccc',
+    color: '#666666',
     fontFamily: 'UbuntuMono',
     fontSize: 12,
     marginBottom: 12,
@@ -228,7 +229,7 @@ const styles = StyleSheet.create({
     marginVertical: 12,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#1a1a1a',
+    borderColor: '#333333',
     backgroundColor: '#000000',
   },
   allocTitle: {
@@ -239,7 +240,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   allocText: {
-    color: '#cccccc',
+    color: '#ffffff',
     fontFamily: 'UbuntuMono',
     fontSize: 12,
     marginBottom: 4,
@@ -252,7 +253,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a1a',
   },
   completedText: {
-    color: '#ffffff',
+    color: '#7eb8ff',
     fontFamily: 'PixelFont',
     fontSize: 10,
     marginTop: 12,

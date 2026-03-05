@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Font from 'expo-font';
 import DashboardScreen from './screens/DashboardScreen';
@@ -11,6 +11,17 @@ import IncomeScreen from './screens/IncomeScreen';
 import { DataProvider } from './context/DataContext';
 
 const Tab = createBottomTabNavigator();
+
+const HeaderTitle = () => (
+  <View style={{ flexDirection: 'row' }}>
+    <Text style={styles.headerTitleBlue}>FiB</Text>
+    <Text style={styles.headerTitle}> - </Text>
+    <Text style={styles.headerTitleBlue}>Fi</Text>
+    <Text style={styles.headerTitle}>nance </Text>
+    <Text style={styles.headerTitleBlue}>B</Text>
+    <Text style={styles.headerTitle}>uddy</Text>
+  </View>
+);
 
 export default function App() {
   const [fontsLoaded, setFontsLoaded] = useState(false);
@@ -51,6 +62,7 @@ export default function App() {
             name="Dashboard" 
             component={DashboardScreen}
             options={{
+              headerTitle: () => <HeaderTitle />,
               tabBarIcon: ({ color, size }) => (
                 <Ionicons name="home" size={size} color={color} />
               ),
@@ -98,7 +110,12 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: '#ffffff',
     fontFamily: 'PixelFont',
-    fontSize: 16,
+    fontSize: 14,
+  },
+  headerTitleBlue: {
+    color: '#7eb8ff',
+    fontFamily: 'PixelFont',
+    fontSize: 14,
   },
   tabBar: {
     backgroundColor: '#000000',

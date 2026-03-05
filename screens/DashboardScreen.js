@@ -1,20 +1,97 @@
-import React, { useMemo, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions, Animated } from 'react-native';
+import React, { useMemo, useEffect, useRef, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Dimensions, Animated, TouchableWithoutFeedback } from 'react-native';
 import { PieChart, LineChart } from 'react-native-chart-kit';
 import { useData } from '../context/DataContext';
 import BongoCat from '../components/BongoCat';
 import * as Animatable from 'react-native-animatable';
+import { useIsFocused } from '@react-navigation/native';
 
 const CATEGORIES = ['Books', 'Food', 'Gifts', 'Movies', 'Groceries', 'Transport', 'Entertainment', 'Others'];
 const COLORS = ['#ffffff', '#cccccc', '#999999', '#666666', '#e0e0e0', '#b3b3b3', '#808080', '#4d4d4d'];
+
+const TapRupee = ({ x, y, id, onComplete }) => {
+  const translateY = useRef(new Animated.Value(0)).current;
+  const opacity = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(translateY, {
+        toValue: -100,
+        duration: 1500,
+        useNativeDriver: true,
+      }),
+      Animated.timing(opacity, {
+        toValue: 0,
+        duration: 1500,
+        useNativeDriver: true,
+      }),
+    ]).start(() => onComplete(id));
+  }, []);
+
+  return (
+    <Animated.Text
+      style={[
+        styles.tapRupee,
+        {
+          position: 'absolute',
+          left: x - 20,
+          top: y - 20,
+          opacity,
+          transform: [{ translateY }],
+          zIndex: 1000,
+        },
+      ]}
+    >
+      ₹
+    </Animated.Text>
+  );
+};
 
 export default function DashboardScreen() {
   const { expenses, balance } = useData();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
+  const [tapRupees, setTapRupees] = useState([]);
+  const [animKey, setAnimKey] = useState(0);
+  const isFocused = useIsFocused();
 
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
+
+  useEffect(() => {
+    if (isFocused) {
+      setAnimKey(prev => prev + 1);
+      fadeAnim.setValue(0);
+      slideAnim.setValue(50);
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.spring(slideAnim, {
+          toValue: 0,
+          tension: 20,
+          friction: 7,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [isFocused]);
+
+  const handleTap = (event) => {
+    const { locationX, locationY } = event.nativeEvent;
+    const newRupee = {
+      id: Date.now(),
+      x: locationX,
+      y: locationY,
+    };
+    setTapRupees([...tapRupees, newRupee]);
+  };
+
+  const removeRupee = (id) => {
+    setTapRupees(tapRupees.filter(r => r.id !== id));
+  };
 
   useEffect(() => {
     Animated.parallel([
@@ -77,26 +154,32 @@ export default function DashboardScreen() {
 
   return (
     <ScrollView style={styles.container}>
-      <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-        {/* Balance box with Bongo Cat on top */}
-        <Animatable.View animation="fadeInUp" delay={200} style={styles.balanceContainer}>
-          <View style={styles.bongoCatWrapper}>
+      <TouchableWithoutFeedback onPress={handleTap}>
+        <View style={{ minHeight: Dimensions.get('window').height - 100 }}>
+          {tapRupees.map(rupee => (
+            <TapRupee key={rupee.id} x={rupee.x} y={rupee.y} id={rupee.id} onComplete={removeRupee} />
+          ))}
+          
+          <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+          {/* Bongo Cat - separate from balance */}
+          <Animatable.View key={`cat-${animKey}`} animation="bounceIn" duration={1500} style={styles.catContainer}>
             <BongoCat size={Dimensions.get('window').width * 0.6} />
-          </View>
-          <View style={styles.balanceBox}>
-            <Text style={styles.title}>BALANCE</Text>
-            <Text style={styles.amount}>₹{balance.toFixed(2)}</Text>
-          </View>
-        </Animatable.View>
+          </Animatable.View>
 
-        <Animatable.View animation="fadeInUp" delay={400} style={styles.box}>
-          <Text style={styles.title}>SPENT THIS MONTH</Text>
-          <Text style={styles.amount}>₹{totalSpent.toFixed(2)}</Text>
+          {/* Balance box */}
+          <Animatable.View key={`balance-${animKey}`} animation="fadeInUp" delay={200} style={styles.box}>
+            <Text style={styles.title}>BALANCE.</Text>
+            <Text style={styles.amount}>₹{balance.toFixed(2)}</Text>
+          </Animatable.View>
+
+          <Animatable.View key={`spent-${animKey}`} animation="fadeInUp" delay={400} style={styles.box}>
+            <Text style={styles.title}>SPENT THIS MONTH.</Text>
+            <Text style={styles.amount}>₹{totalSpent.toFixed(2)}</Text>
         </Animatable.View>
 
         {last7DaysData.amounts.some(a => a > 0) && (
-          <Animatable.View animation="fadeInUp" delay={600} style={styles.box}>
-            <Text style={styles.title}>LAST 7 DAYS SPENDING</Text>
+          <Animatable.View key={`chart-${animKey}`} animation="fadeInUp" delay={600} style={styles.box}>
+            <Text style={styles.title}>LAST 7 DAYS SPENDING.</Text>
             <LineChart
               data={{
                 labels: last7DaysData.days,
@@ -125,8 +208,8 @@ export default function DashboardScreen() {
         )}
 
         {categoryData.length > 0 && (
-          <Animatable.View animation="fadeInUp" delay={800} style={styles.box}>
-            <Text style={styles.title}>SPENDING BY CATEGORY</Text>
+          <Animatable.View key={`pie-${animKey}`} animation="fadeInUp" delay={800} style={styles.box}>
+            <Text style={styles.title}>SPENDING BY CATEGORY.</Text>
             <PieChart
               data={categoryData}
               width={Dimensions.get('window').width - 80}
@@ -143,8 +226,8 @@ export default function DashboardScreen() {
           </Animatable.View>
         )}
 
-        <Animatable.View animation="fadeInUp" delay={1000} style={styles.box}>
-          <Text style={styles.title}>RECENT EXPENSES</Text>
+        <Animatable.View key={`recent-${animKey}`} animation="fadeInUp" delay={1000} style={styles.boxGray}>
+          <Text style={styles.title}>RECENT EXPENSES.</Text>
           {monthlyExpenses.length === 0 ? (
             <Text style={styles.emptyText}>No expenses yet</Text>
           ) : (
@@ -165,6 +248,8 @@ export default function DashboardScreen() {
           )}
         </Animatable.View>
       </Animated.View>
+        </View>
+      </TouchableWithoutFeedback>
     </ScrollView>
   );
 }
@@ -175,25 +260,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000',
     padding: 20,
   },
-  balanceContainer: {
-    position: 'relative',
-    marginTop: 100,
-    marginBottom: 16,
-  },
-  bongoCatWrapper: {
-    position: 'absolute',
-    top: -110,
-    left: 0,
-    right: 0,
+  catContainer: {
     alignItems: 'center',
-    zIndex: 10,
-  },
-  balanceBox: {
-    borderWidth: 1,
-    borderColor: '#4a9eff',
-    padding: 20,
-    paddingTop: 30,
-    backgroundColor: '#0a0a0a',
+    marginVertical: 20,
+    marginBottom: 30,
   },
   box: {
     borderWidth: 1,
@@ -202,15 +272,22 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     backgroundColor: '#0a0a0a',
   },
+  boxGray: {
+    borderWidth: 1,
+    borderColor: '#333333',
+    padding: 20,
+    marginBottom: 16,
+    backgroundColor: '#0a0a0a',
+  },
   title: {
-    color: '#7eb8ff',
+    color: '#ffffff',
     fontFamily: 'PixelFont',
     fontSize: 10,
     letterSpacing: 2,
     marginBottom: 12,
   },
   amount: {
-    color: '#ffffff',
+    color: '#7eb8ff',
     fontFamily: 'PixelFont',
     fontSize: 24,
   },
@@ -224,7 +301,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#1a2a3a',
+    borderBottomColor: '#1a1a1a',
   },
   expenseText: {
     color: '#ffffff',
@@ -232,7 +309,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   expenseCategory: {
-    color: '#7eb8ff',
+    color: '#666666',
     fontFamily: 'UbuntuMono',
     fontSize: 10,
     marginTop: 2,
@@ -243,10 +320,15 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   emptyText: {
-    color: '#4a9eff',
+    color: '#666666',
     fontFamily: 'UbuntuMono',
     fontSize: 12,
     textAlign: 'center',
     paddingVertical: 20,
+  },
+  tapRupee: {
+    color: '#7eb8ff',
+    fontSize: 40,
+    fontWeight: 'bold',
   },
 });

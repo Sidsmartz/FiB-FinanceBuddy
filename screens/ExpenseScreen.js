@@ -53,7 +53,7 @@ export default function ExpenseScreen() {
       )}
 
       <Animatable.View animation="fadeInDown" delay={100} style={styles.box}>
-        <Text style={styles.title}>ADD BALANCE</Text>
+        <Text style={styles.title}>ADD BALANCE.</Text>
         <TextInput
           style={styles.input}
           placeholder="Amount"
@@ -68,7 +68,7 @@ export default function ExpenseScreen() {
       </Animatable.View>
 
       <Animatable.View animation="fadeInUp" delay={200} style={styles.box}>
-        <Text style={styles.title}>LOG EXPENSE</Text>
+        <Text style={styles.title}>LOG EXPENSE.</Text>
         
         <TextInput
           style={styles.input}
@@ -118,7 +118,7 @@ export default function ExpenseScreen() {
       >
         <View style={styles.modalOverlay}>
           <Animatable.View animation="zoomIn" duration={300} style={styles.modalBox}>
-            <Text style={styles.modalTitle}>SELECT CATEGORY</Text>
+            <Text style={styles.modalTitle}>SELECT CATEGORY.</Text>
             {CATEGORIES.map((cat, idx) => (
               <Animatable.View
                 key={cat}
@@ -158,20 +158,20 @@ const styles = StyleSheet.create({
   successBanner: {
     backgroundColor: '#1a1a1a',
     borderWidth: 1,
-    borderColor: '#ffffff',
+    borderColor: '#7eb8ff',
     padding: 16,
     marginBottom: 20,
     alignItems: 'center',
   },
   successText: {
-    color: '#ffffff',
+    color: '#7eb8ff',
     fontFamily: 'PixelFont',
     fontSize: 12,
     letterSpacing: 2,
   },
   box: {
     borderWidth: 1,
-    borderColor: '#333333',
+    borderColor: '#4a9eff',
     padding: 20,
     marginBottom: 20,
     backgroundColor: '#0a0a0a',
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
     fontFamily: 'UbuntuMono',
   },
   placeholder: {
-    color: '#444444',
+    color: '#666666',
   },
   button: {
     borderWidth: 1,
@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#1a1a1a',
   },
   categoryText: {
-    color: '#cccccc',
+    color: '#ffffff',
     fontFamily: 'UbuntuMono',
     fontSize: 13,
   },
