@@ -8,7 +8,7 @@ import * as Animatable from 'react-native-animatable';
 import { useIsFocused } from '@react-navigation/native';
 
 const CATEGORIES = ['Books', 'Food', 'Gifts', 'Movies', 'Groceries', 'Transport', 'Entertainment', 'Others'];
-const COLORS = ['#ffffff', '#cccccc', '#999999', '#666666', '#e0e0e0', '#b3b3b3', '#808080', '#4d4d4d'];
+const COLORS = ['#7eb8ff', '#5a9eff', '#3d84ff', '#2069ff', '#1a5fd9', '#1450b3', '#0e408c', '#083066'];
 
 const TapRupee = ({ x, y, id, onComplete }) => {
   const [translateY] = useState(new Animated.Value(0));
