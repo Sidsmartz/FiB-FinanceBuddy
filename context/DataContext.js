@@ -51,6 +51,26 @@ export const DataProvider = ({ children }) => {
     saveData({ expenses: newExpenses, savings, savingsGoals, balance: balance - expense.amount, emergencySavings, goalSavings, incomeFlows });
   };
 
+  const updateExpense = (id, updatedExpense) => {
+    const oldExpense = expenses.find(e => e.id === id);
+    const newExpenses = expenses.map(e => e.id === id ? { ...updatedExpense, id } : e);
+    setExpenses(newExpenses);
+    // Adjust balance: add back old amount, subtract new amount
+    const newBalance = balance + oldExpense.amount - updatedExpense.amount;
+    setBalance(newBalance);
+    saveData({ expenses: newExpenses, savings, savingsGoals, balance: newBalance, emergencySavings, goalSavings, incomeFlows });
+  };
+
+  const deleteExpense = (id) => {
+    const expense = expenses.find(e => e.id === id);
+    const newExpenses = expenses.filter(e => e.id !== id);
+    setExpenses(newExpenses);
+    // Add the expense amount back to balance
+    const newBalance = balance + expense.amount;
+    setBalance(newBalance);
+    saveData({ expenses: newExpenses, savings, savingsGoals, balance: newBalance, emergencySavings, goalSavings, incomeFlows });
+  };
+
   const addSaving = (saving) => {
     const newSavings = [...savings, { ...saving, id: Date.now() }];
     setSavings(newSavings);
@@ -130,6 +150,8 @@ export const DataProvider = ({ children }) => {
       goalSavings,
       incomeFlows,
       addExpense,
+      updateExpense,
+      deleteExpense,
       addSaving,
       createSavingsGoal,
       deleteSavingsGoal,

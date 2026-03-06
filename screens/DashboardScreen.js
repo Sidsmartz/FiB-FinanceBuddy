@@ -1,5 +1,6 @@
 import React, { useMemo, useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions, Animated, TouchableWithoutFeedback, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Dimensions, Animated, TouchableWithoutFeedback, TouchableOpacity, Modal, TextInput, Platform } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { PieChart, LineChart } from 'react-native-chart-kit';
 import { useData } from '../context/DataContext';
 import BongoCat from '../components/BongoCat';
@@ -49,7 +50,7 @@ const TapRupee = ({ x, y, id, onComplete }) => {
 };
 
 export default function DashboardScreen() {
-  const { expenses, savings, balance } = useData();
+  const { expenses, savings, balance, updateExpense, deleteExpense } = useData();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
   const [tapRupees, setTapRupees] = useState([]);
@@ -57,6 +58,13 @@ export default function DashboardScreen() {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [showMonthGraph, setShowMonthGraph] = useState(true);
+  const [editingExpense, setEditingExpense] = useState(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editAmount, setEditAmount] = useState('');
+  const [editCategory, setEditCategory] = useState('');
+  const [editDate, setEditDate] = useState(new Date());
+  const [showEditDateModal, setShowEditDateModal] = useState(false);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
   const isFocused = useIsFocused();
 
   const isCurrentMonth = selectedYear === new Date().getFullYear() && selectedMonth === new Date().getMonth();
@@ -159,6 +167,41 @@ export default function DashboardScreen() {
   const getMonthLabel = () => {
     const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
     return `${monthNames[selectedMonth]} ${selectedYear.toString().slice(-2)}`;
+  };
+
+  const handleEditExpense = (expense) => {
+    setEditingExpense(expense);
+    setEditTitle(expense.title);
+    setEditAmount(expense.amount.toString());
+    setEditCategory(expense.category);
+    setEditDate(new Date(expense.date));
+  };
+
+  const handleSaveEdit = () => {
+    if (!editTitle || !editAmount || !editCategory) {
+      alert('Please fill all required fields');
+      return;
+    }
+
+    updateExpense(editingExpense.id, {
+      title: editTitle,
+      amount: parseFloat(editAmount),
+      category: editCategory,
+      date: editDate.toISOString(),
+      split: editingExpense.split || 0,
+    });
+
+    setEditingExpense(null);
+    setEditTitle('');
+    setEditAmount('');
+    setEditCategory('');
+    setEditDate(new Date());
+  };
+
+  const handleDeleteExpense = (id) => {
+    if (confirm('Delete this transaction?')) {
+      deleteExpense(id);
+    }
   };
 
   const categoryData = useMemo(() => {
@@ -367,17 +410,142 @@ export default function DashboardScreen() {
                 delay={(isCurrentMonth ? 1100 : 700) + (idx * 100)}
                 style={styles.expenseItem}
               >
-                <View>
+                <View style={styles.expenseInfo}>
                   <Text style={styles.expenseText}>{exp.title}</Text>
                   <Text style={styles.expenseCategory}>
                     {exp.category} • {new Date(exp.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
                   </Text>
                 </View>
-                <Text style={styles.expenseAmount}>₹{exp.amount}</Text>
+                <View style={styles.expenseRight}>
+                  <Text style={styles.expenseAmount}>₹{exp.amount}</Text>
+                  <View style={styles.expenseActions}>
+                    <TouchableOpacity onPress={() => handleEditExpense(exp)} style={styles.actionButton}>
+                      <Text style={styles.actionText}>✎</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => handleDeleteExpense(exp.id)} style={styles.actionButton}>
+                      <Text style={styles.deleteActionText}>×</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
               </Animatable.View>
             ))
           )}
         </Animatable.View>
+
+        {/* Edit Modal */}
+        <Modal
+          visible={editingExpense !== null}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setEditingExpense(null)}
+        >
+          <View style={styles.modalOverlay}>
+            <Animatable.View animation="zoomIn" duration={300} style={styles.modalBox}>
+              <Text style={styles.modalTitle}>EDIT TRANSACTION.</Text>
+              
+              <TextInput
+                style={styles.input}
+                placeholder="Title"
+                placeholderTextColor="#444444"
+                value={editTitle}
+                onChangeText={setEditTitle}
+              />
+
+              <TextInput
+                style={styles.input}
+                placeholder="Amount"
+                placeholderTextColor="#444444"
+                value={editAmount}
+                onChangeText={setEditAmount}
+                keyboardType="numeric"
+              />
+
+              <TouchableOpacity 
+                style={styles.input} 
+                onPress={() => setShowCategoryModal(true)}
+              >
+                <Text style={[styles.inputText, !editCategory && styles.placeholder]}>
+                  {editCategory || 'Select Category'}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.input} 
+                onPress={() => setShowEditDateModal(true)}
+              >
+                <Text style={styles.inputText}>
+                  {editDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                </Text>
+              </TouchableOpacity>
+
+              {showEditDateModal && (
+                <DateTimePicker
+                  value={editDate}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={(event, selectedDate) => {
+                    setShowEditDateModal(Platform.OS === 'ios');
+                    if (selectedDate) {
+                      setEditDate(selectedDate);
+                    }
+                  }}
+                  maximumDate={new Date()}
+                />
+              )}
+
+              <TouchableOpacity 
+                style={styles.button}
+                onPress={handleSaveEdit}
+              >
+                <Text style={styles.buttonText}>SAVE</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.closeButton}
+                onPress={() => setEditingExpense(null)}
+              >
+                <Text style={styles.buttonText}>CANCEL</Text>
+              </TouchableOpacity>
+            </Animatable.View>
+          </View>
+        </Modal>
+
+        {/* Category Modal */}
+        <Modal
+          visible={showCategoryModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowCategoryModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <Animatable.View animation="zoomIn" duration={300} style={styles.modalBox}>
+              <Text style={styles.modalTitle}>SELECT CATEGORY.</Text>
+              {CATEGORIES.map((cat, idx) => (
+                <Animatable.View
+                  key={cat}
+                  animation="fadeInRight"
+                  delay={idx * 50}
+                >
+                  <TouchableOpacity
+                    style={styles.categoryItem}
+                    onPress={() => {
+                      setEditCategory(cat);
+                      setShowCategoryModal(false);
+                    }}
+                  >
+                    <Text style={styles.categoryText}>{cat}</Text>
+                  </TouchableOpacity>
+                </Animatable.View>
+              ))}
+              <TouchableOpacity 
+                style={styles.closeButton}
+                onPress={() => setShowCategoryModal(false)}
+              >
+                <Text style={styles.buttonText}>CLOSE</Text>
+              </TouchableOpacity>
+            </Animatable.View>
+          </View>
+        </Modal>
       </Animated.View>
         </View>
       </TouchableWithoutFeedback>
@@ -499,6 +667,20 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#1a1a1a',
   },
+  expenseItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1a1a1a',
+  },
+  expenseInfo: {
+    flex: 1,
+  },
+  expenseRight: {
+    alignItems: 'flex-end',
+  },
   expenseText: {
     color: '#ffffff',
     fontFamily: 'UbuntuMono',
@@ -514,6 +696,91 @@ const styles = StyleSheet.create({
     color: '#7eb8ff',
     fontFamily: 'UbuntuMono',
     fontSize: 12,
+    marginBottom: 4,
+  },
+  expenseActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  actionButton: {
+    padding: 4,
+  },
+  actionText: {
+    color: '#7eb8ff',
+    fontFamily: 'PixelFont',
+    fontSize: 14,
+  },
+  deleteActionText: {
+    color: '#ff6b6b',
+    fontFamily: 'PixelFont',
+    fontSize: 18,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.95)',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  modalBox: {
+    borderWidth: 1,
+    borderColor: '#333333',
+    padding: 20,
+    backgroundColor: '#0a0a0a',
+  },
+  modalTitle: {
+    color: '#ffffff',
+    fontFamily: 'PixelFont',
+    fontSize: 10,
+    letterSpacing: 2,
+    marginBottom: 16,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#333333',
+    padding: 14,
+    marginBottom: 12,
+    color: '#ffffff',
+    fontFamily: 'UbuntuMono',
+    backgroundColor: '#000000',
+    fontSize: 13,
+  },
+  inputText: {
+    color: '#ffffff',
+    fontFamily: 'UbuntuMono',
+  },
+  placeholder: {
+    color: '#666666',
+  },
+  button: {
+    borderWidth: 1,
+    borderColor: '#ffffff',
+    padding: 14,
+    alignItems: 'center',
+    backgroundColor: '#1a1a1a',
+  },
+  buttonText: {
+    color: '#ffffff',
+    fontFamily: 'PixelFont',
+    fontSize: 10,
+    letterSpacing: 1,
+  },
+  closeButton: {
+    borderWidth: 1,
+    borderColor: '#ffffff',
+    padding: 14,
+    alignItems: 'center',
+    backgroundColor: '#1a1a1a',
+    marginTop: 12,
+  },
+  categoryItem: {
+    padding: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1a1a1a',
+  },
+  categoryText: {
+    color: '#ffffff',
+    fontFamily: 'UbuntuMono',
+    fontSize: 13,
   },
   emptyText: {
     color: '#666666',
