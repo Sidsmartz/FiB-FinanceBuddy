@@ -231,3 +231,10 @@ This project is open source and available for personal use.
 ---
 
 Made with ❤️ for personal finance tracking
+
+
+v1.1.0 - Removed expected income screen to replace with transactions with filters, attempted bug fix when removing transaction, fixed editing transaction
+
+v1.2.0 - Added balance title and made it a tab in the transactions tab, added a date range feature for the transactions tab
+Attempted fixing delete transaction feature
+//Local Build

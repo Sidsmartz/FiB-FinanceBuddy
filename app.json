@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "FiB - Finance Buddy",
-    "slug": "fib-finance-buddy",
+    "name": "FiB",
+    "slug": "fib",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
