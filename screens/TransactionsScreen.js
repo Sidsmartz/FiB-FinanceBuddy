@@ -92,12 +92,13 @@ export default function TransactionsScreen() {
 
   const handleDelete = (transaction) => {
     try {
-      if (transaction.type === 'expense') {
+      if (activeTab === 'balance') {
+        // For balance history items
+        deleteBalanceHistory(transaction.id);
+      } else if (transaction.type === 'expense') {
         deleteExpense(transaction.id);
       } else if (transaction.type === 'saving') {
         deleteSaving(transaction.id);
-      } else {
-        deleteBalanceHistory(transaction.id);
       }
     } catch (error) {
       console.error('Delete error:', error);
