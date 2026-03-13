@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Modal } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Modal, Alert } from 'react-native';
 import { useData } from '../context/DataContext';
 import * as Animatable from 'react-native-animatable';
 import { useIsFocused } from '@react-navigation/native';
@@ -74,9 +74,14 @@ export default function GoalsScreen() {
                 <Text style={styles.goalName}>{goal.name}</Text>
                 <TouchableOpacity 
                   onPress={() => {
-                    if (confirm(`Delete "${goal.name}" goal?`)) {
-                      deleteSavingsGoal(goal.id);
-                    }
+                    Alert.alert(
+                      'Delete Goal',
+                      `Delete "${goal.name}" goal?`,
+                      [
+                        { text: 'Cancel', style: 'cancel' },
+                        { text: 'Delete', style: 'destructive', onPress: () => deleteSavingsGoal(goal.id) }
+                      ]
+                    );
                   }}
                   style={styles.deleteButton}
                 >

@@ -91,18 +91,37 @@ export default function TransactionsScreen() {
   }, [balanceHistory, startDate, endDate]);
 
   const handleDelete = (transaction) => {
+    console.log('Delete attempt:', { 
+      activeTab, 
+      transactionId: transaction?.id, 
+      transactionType: transaction?.type,
+      transaction 
+    });
+    
     try {
+      if (!transaction || !transaction.id) {
+        console.error('Invalid transaction object:', transaction);
+        alert('Error: Invalid transaction data');
+        return;
+      }
+
       if (activeTab === 'balance') {
-        // For balance history items
+        console.log('Deleting balance history item:', transaction.id);
         deleteBalanceHistory(transaction.id);
       } else if (transaction.type === 'expense') {
+        console.log('Deleting expense:', transaction.id);
         deleteExpense(transaction.id);
       } else if (transaction.type === 'saving') {
+        console.log('Deleting saving:', transaction.id);
         deleteSaving(transaction.id);
+      } else {
+        console.error('Unknown transaction type:', transaction.type);
+        alert('Error: Unknown transaction type');
       }
     } catch (error) {
       console.error('Delete error:', error);
-      alert('Error deleting transaction');
+      console.error('Error stack:', error.stack);
+      alert(`Error deleting transaction: ${error.message}`);
     }
   };
 
@@ -212,7 +231,7 @@ export default function TransactionsScreen() {
                       styles.transactionAmount,
                       transaction.type === 'saving' && styles.transactionAmountSaving
                     ]}>
-                      {transaction.type === 'expense' ? '-' : '+'}₹{transaction.amount.toFixed(2)}
+                      {transaction.type === 'expense' ? '-' : '+'}₹{Number(transaction.amount || 0).toFixed(2)}
                     </Text>
                     <TouchableOpacity 
                       style={styles.deleteButton}
@@ -251,7 +270,7 @@ export default function TransactionsScreen() {
                   </View>
                   <View style={styles.transactionRight}>
                     <Text style={styles.balanceAmount}>
-                      +₹{item.amount.toFixed(2)}
+                      +₹{Number(item.amount || 0).toFixed(2)}
                     </Text>
                     <TouchableOpacity 
                       style={styles.deleteButton}

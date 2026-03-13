@@ -238,3 +238,6 @@ v1.1.0 - Removed expected income screen to replace with transactions with filter
 v1.2.0 - Added balance title and made it a tab in the transactions tab, added a date range feature for the transactions tab
 Attempted fixing delete transaction feature
 //Local Build
+
+v1.3.0
+Fixed + Tested Transaction Deletion

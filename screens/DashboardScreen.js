@@ -1,5 +1,5 @@
 import React, { useMemo, useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions, Animated, TouchableWithoutFeedback, TouchableOpacity, Modal, TextInput, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Dimensions, Animated, TouchableWithoutFeedback, TouchableOpacity, Modal, TextInput, Platform, Alert } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { PieChart, LineChart } from 'react-native-chart-kit';
 import { useData } from '../context/DataContext';
@@ -199,9 +199,14 @@ export default function DashboardScreen() {
   };
 
   const handleDeleteExpense = (id) => {
-    if (confirm('Delete this transaction?')) {
-      deleteExpense(id);
-    }
+    Alert.alert(
+      'Delete Transaction',
+      'Delete this transaction?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: () => deleteExpense(id) }
+      ]
+    );
   };
 
   const categoryData = useMemo(() => {
