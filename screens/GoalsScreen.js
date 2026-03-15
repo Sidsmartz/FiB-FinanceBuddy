@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Modal } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Modal, Alert } from 'react-native';
 import { useData } from '../context/DataContext';
 import * as Animatable from 'react-native-animatable';
 import { useIsFocused } from '@react-navigation/native';
@@ -43,13 +43,13 @@ export default function GoalsScreen() {
     <ScrollView style={styles.container}>
       {showSuccess && (
         <Animatable.View animation="bounceIn" style={styles.successBanner}>
-          <Text style={styles.successText}>✓ GOAL CREATED!</Text>
+          <Text style={styles.successText}>Γ£ô GOAL CREATED!</Text>
         </Animatable.View>
       )}
 
       <Animatable.View key={`total-${animKey}`} animation="fadeInDown" delay={100} style={styles.boxGreen}>
         <Text style={styles.title}>TOTAL SAVINGS.</Text>
-        <Text style={styles.amountGreen}>₹{totalSaved.toFixed(2)}</Text>
+        <Text style={styles.amountGreen}>Γé╣{totalSaved.toFixed(2)}</Text>
       </Animatable.View>
 
       <Animatable.View key={`create-${animKey}`} animation="fadeInDown" delay={150} style={styles.boxCreate}>
@@ -74,18 +74,23 @@ export default function GoalsScreen() {
                 <Text style={styles.goalName}>{goal.name}</Text>
                 <TouchableOpacity 
                   onPress={() => {
-                    if (confirm(`Delete "${goal.name}" goal?`)) {
-                      deleteSavingsGoal(goal.id);
-                    }
+                    Alert.alert(
+                      'Delete Goal',
+                      `Delete "${goal.name}" goal?`,
+                      [
+                        { text: 'Cancel', style: 'cancel' },
+                        { text: 'Delete', style: 'destructive', onPress: () => deleteSavingsGoal(goal.id) }
+                      ]
+                    );
                   }}
                   style={styles.deleteButton}
                 >
-                  <Text style={styles.deleteText}>×</Text>
+                  <Text style={styles.deleteText}>├ù</Text>
                 </TouchableOpacity>
               </View>
               <Text style={styles.goalAmount}>
-                ₹{goal.current.toFixed(2)}
-                {goal.target && ` / ₹${goal.target.toFixed(2)}`}
+                Γé╣{goal.current.toFixed(2)}
+                {goal.target && ` / Γé╣${goal.target.toFixed(2)}`}
               </Text>
               {goal.target && (
                 <View style={styles.progressBar}>
