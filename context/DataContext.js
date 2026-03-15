@@ -63,12 +63,34 @@ export const DataProvider = ({ children }) => {
 
   const deleteExpense = (id) => {
     const expense = expenses.find(e => e.id === id);
+    if (!expense) return; // Safety check to prevent crash
     const newExpenses = expenses.filter(e => e.id !== id);
     setExpenses(newExpenses);
     // Add the expense amount back to balance
     const newBalance = balance + expense.amount;
     setBalance(newBalance);
     saveData({ expenses: newExpenses, savings, savingsGoals, balance: newBalance, emergencySavings, goalSavings, incomeFlows });
+  };
+
+  const deleteSaving = (id) => {
+    const saving = savings.find(s => s.id === id);
+    if (!saving) return; // Safety check to prevent crash
+    const newSavings = savings.filter(s => s.id !== id);
+    setSavings(newSavings);
+    // Add the saving amount back to balance
+    const newBalance = balance + saving.amount;
+    setBalance(newBalance);
+    
+    // Update the savings goal amount if applicable
+    if (saving.goalId) {
+      const newGoals = savingsGoals.map(g => 
+        g.id === saving.goalId ? { ...g, current: Math.max(0, g.current - saving.amount) } : g
+      );
+      setSavingsGoals(newGoals);
+      saveData({ expenses, savings: newSavings, savingsGoals: newGoals, balance: newBalance, emergencySavings, goalSavings, incomeFlows });
+    } else {
+      saveData({ expenses, savings: newSavings, savingsGoals, balance: newBalance, emergencySavings, goalSavings, incomeFlows });
+    }
   };
 
   const addSaving = (saving) => {
@@ -152,6 +174,7 @@ export const DataProvider = ({ children }) => {
       addExpense,
       updateExpense,
       deleteExpense,
+      deleteSaving,
       addSaving,
       createSavingsGoal,
       deleteSavingsGoal,
