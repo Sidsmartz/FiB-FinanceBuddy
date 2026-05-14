@@ -16,6 +16,7 @@ export default function ExpenseScreen() {
   const [date, setDate] = useState(new Date());
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showDateModal, setShowDateModal] = useState(false);
+  const [balanceTitle, setBalanceTitle] = useState('');
   const [balanceAmount, setBalanceAmount] = useState('');
   const [savingAmount, setSavingAmount] = useState('');
   const [savingDate, setSavingDate] = useState(new Date());
@@ -56,9 +57,13 @@ export default function ExpenseScreen() {
   };
 
   const handleAddBalance = () => {
-    if (!balanceAmount) return;
-    addBalance(parseFloat(balanceAmount));
+    if (!balanceAmount || !balanceTitle) {
+      alert('Please fill all fields');
+      return;
+    }
+    addBalance(parseFloat(balanceAmount), balanceTitle);
     setBalanceAmount('');
+    setBalanceTitle('');
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 2000);
   };
@@ -87,12 +92,19 @@ export default function ExpenseScreen() {
     <ScrollView style={styles.container}>
       {showSuccess && (
         <Animatable.View animation="bounceIn" style={styles.successBanner}>
-          <Text style={styles.successText}>✓ SUCCESS!</Text>
+          <Text style={styles.successText}>Γ£ô SUCCESS!</Text>
         </Animatable.View>
       )}
 
       <Animatable.View key={`balance-${animKey}`} animation="fadeInDown" delay={100} style={styles.box}>
         <Text style={styles.title}>ADD BALANCE.</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Title (e.g., Salary, Gift)"
+          placeholderTextColor="#444444"
+          value={balanceTitle}
+          onChangeText={setBalanceTitle}
+        />
         <TextInput
           style={styles.input}
           placeholder="Amount"
@@ -286,7 +298,7 @@ export default function ExpenseScreen() {
                       <View>
                         <Text style={styles.categoryText}>{goal.name}</Text>
                         <Text style={styles.goalProgress}>
-                          ₹{goal.current.toFixed(2)}{goal.target ? ` / ₹${goal.target.toFixed(2)}` : ''}
+                          Γé╣{goal.current.toFixed(2)}{goal.target ? ` / Γé╣${goal.target.toFixed(2)}` : ''}
                         </Text>
                       </View>
                     </TouchableOpacity>

@@ -13,6 +13,7 @@ export const DataProvider = ({ children }) => {
   const [emergencySavings, setEmergencySavings] = useState(0);
   const [goalSavings, setGoalSavings] = useState([]);
   const [incomeFlows, setIncomeFlows] = useState([]);
+  const [balanceHistory, setBalanceHistory] = useState([]);
 
   useEffect(() => {
     loadData();
@@ -30,6 +31,7 @@ export const DataProvider = ({ children }) => {
         setEmergencySavings(parsed.emergencySavings || 0);
         setGoalSavings(parsed.goalSavings || []);
         setIncomeFlows(parsed.incomeFlows || []);
+        setBalanceHistory(parsed.balanceHistory || []);
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -44,11 +46,34 @@ export const DataProvider = ({ children }) => {
     }
   };
 
+  const persistData = ({
+    expensesData = expenses,
+    savingsData = savings,
+    savingsGoalsData = savingsGoals,
+    balanceData = balance,
+    emergencySavingsData = emergencySavings,
+    goalSavingsData = goalSavings,
+    incomeFlowsData = incomeFlows,
+    balanceHistoryData = balanceHistory,
+  }) => {
+    saveData({
+      expenses: expensesData,
+      savings: savingsData,
+      savingsGoals: savingsGoalsData,
+      balance: balanceData,
+      emergencySavings: emergencySavingsData,
+      goalSavings: goalSavingsData,
+      incomeFlows: incomeFlowsData,
+      balanceHistory: balanceHistoryData
+    });
+  };
+
   const addExpense = (expense) => {
-    const newExpenses = [...expenses, { ...expense, id: Date.now() }];
+    const newExpenses = [...expenses, { ...expense, id: Date.now().toString() }];
+    const newBalance = balance - expense.amount;
     setExpenses(newExpenses);
-    setBalance(balance - expense.amount);
-    saveData({ expenses: newExpenses, savings, savingsGoals, balance: balance - expense.amount, emergencySavings, goalSavings, incomeFlows });
+    setBalance(newBalance);
+    persistData({ expensesData: newExpenses, balanceData: newBalance });
   };
 
   const updateExpense = (id, updatedExpense) => {
@@ -58,23 +83,62 @@ export const DataProvider = ({ children }) => {
     // Adjust balance: add back old amount, subtract new amount
     const newBalance = balance + oldExpense.amount - updatedExpense.amount;
     setBalance(newBalance);
-    saveData({ expenses: newExpenses, savings, savingsGoals, balance: newBalance, emergencySavings, goalSavings, incomeFlows });
+    saveData({ expenses: newExpenses, savings, savingsGoals, balance: newBalance, emergencySavings, goalSavings, incomeFlows, balanceHistory });
   };
 
   const deleteExpense = (id) => {
     const expense = expenses.find(e => e.id === id);
+    if (!expense) return;
+    
     const newExpenses = expenses.filter(e => e.id !== id);
-    setExpenses(newExpenses);
-    // Add the expense amount back to balance
     const newBalance = balance + expense.amount;
+    
+    setExpenses(newExpenses);
     setBalance(newBalance);
-    saveData({ expenses: newExpenses, savings, savingsGoals, balance: newBalance, emergencySavings, goalSavings, incomeFlows });
+    
+    persistData({
+      expensesData: newExpenses,
+      balanceData: newBalance
+    });
+  };
+
+  const deleteSaving = (id) => {
+    const saving = savings.find(s => s.id === id);
+    if (!saving) return;
+    
+    const newSavings = savings.filter(s => s.id !== id);
+    const newBalance = balance + saving.amount;
+    
+    setSavings(newSavings);
+    setBalance(newBalance);
+    
+    if (saving.goalId) {
+      const newGoals = savingsGoals.map(g => 
+        g.id === saving.goalId 
+          ? { ...g, current: Math.max(0, g.current - saving.amount) } 
+          : g
+      );
+      
+      setSavingsGoals(newGoals);
+      
+      persistData({
+        savingsData: newSavings,
+        savingsGoalsData: newGoals,
+        balanceData: newBalance
+      });
+    } else {
+      persistData({
+        savingsData: newSavings,
+        balanceData: newBalance
+      });
+    }
   };
 
   const addSaving = (saving) => {
-    const newSavings = [...savings, { ...saving, id: Date.now() }];
+    const newSavings = [...savings, { ...saving, id: Date.now().toString() }];
+    const newBalance = balance - saving.amount;
     setSavings(newSavings);
-    setBalance(balance - saving.amount);
+    setBalance(newBalance);
     
     // Update the savings goal amount
     if (saving.goalId) {
@@ -82,40 +146,73 @@ export const DataProvider = ({ children }) => {
         g.id === saving.goalId ? { ...g, current: g.current + saving.amount } : g
       );
       setSavingsGoals(newGoals);
-      saveData({ expenses, savings: newSavings, savingsGoals: newGoals, balance: balance - saving.amount, emergencySavings, goalSavings, incomeFlows });
+      persistData({ 
+        savingsData: newSavings, 
+        savingsGoalsData: newGoals, 
+        balanceData: newBalance 
+      });
     } else {
-      saveData({ expenses, savings: newSavings, savingsGoals, balance: balance - saving.amount, emergencySavings, goalSavings, incomeFlows });
+      persistData({ 
+        savingsData: newSavings, 
+        balanceData: newBalance 
+      });
     }
   };
 
   const createSavingsGoal = (goal) => {
-    const newGoal = { ...goal, id: Date.now(), current: 0 };
+    const newGoal = { ...goal, id: Date.now().toString(), current: 0 };
     const newGoals = [...savingsGoals, newGoal];
     setSavingsGoals(newGoals);
-    saveData({ expenses, savings, savingsGoals: newGoals, balance, emergencySavings, goalSavings, incomeFlows });
+    persistData({ savingsGoalsData: newGoals });
   };
 
   const deleteSavingsGoal = (id) => {
     const newGoals = savingsGoals.filter(g => g.id !== id);
     setSavingsGoals(newGoals);
-    saveData({ expenses, savings, savingsGoals: newGoals, balance, emergencySavings, goalSavings, incomeFlows });
+    saveData({ expenses, savings, savingsGoals: newGoals, balance, emergencySavings, goalSavings, incomeFlows, balanceHistory });
   };
 
-  const addBalance = (amount) => {
+  const addBalance = (amount, title = 'Balance Added') => {
     const newBalance = balance + amount;
+    const newHistory = [...balanceHistory, { 
+      id: Date.now().toString(), 
+      title, 
+      amount, 
+      date: new Date().toISOString() 
+    }];
     setBalance(newBalance);
-    saveData({ expenses, savings, savingsGoals, balance: newBalance, emergencySavings, goalSavings, incomeFlows });
+    setBalanceHistory(newHistory);
+    persistData({ 
+      balanceData: newBalance, 
+      balanceHistoryData: newHistory 
+    });
+  };
+
+  const deleteBalanceHistory = (id) => {
+    const item = balanceHistory.find(b => b.id === id);
+    if (!item) return;
+    
+    const newHistory = balanceHistory.filter(b => b.id !== id);
+    const newBalance = balance - item.amount;
+    
+    setBalanceHistory(newHistory);
+    setBalance(newBalance);
+    
+    persistData({
+      balanceHistoryData: newHistory,
+      balanceData: newBalance
+    });
   };
 
   const updateEmergencySavings = (amount) => {
     setEmergencySavings(amount);
-    saveData({ expenses, savings, savingsGoals, balance, emergencySavings: amount, goalSavings, incomeFlows });
+    saveData({ expenses, savings, savingsGoals, balance, emergencySavings: amount, goalSavings, incomeFlows, balanceHistory });
   };
 
   const addGoalSaving = (goal) => {
     const newGoals = [...goalSavings, { ...goal, id: Date.now(), current: 0 }];
     setGoalSavings(newGoals);
-    saveData({ expenses, savings, savingsGoals, balance, emergencySavings, goalSavings: newGoals, incomeFlows });
+    saveData({ expenses, savings, savingsGoals, balance, emergencySavings, goalSavings: newGoals, incomeFlows, balanceHistory });
   };
 
   const updateGoalSaving = (id, amount) => {
@@ -123,13 +220,13 @@ export const DataProvider = ({ children }) => {
       g.id === id ? { ...g, current: g.current + amount } : g
     );
     setGoalSavings(newGoals);
-    saveData({ expenses, savings, savingsGoals, balance, emergencySavings, goalSavings: newGoals, incomeFlows });
+    saveData({ expenses, savings, savingsGoals, balance, emergencySavings, goalSavings: newGoals, incomeFlows, balanceHistory });
   };
 
   const addIncomeFlow = (flow) => {
     const newFlows = [...incomeFlows, { ...flow, id: Date.now() }];
     setIncomeFlows(newFlows);
-    saveData({ expenses, savings, savingsGoals, balance, emergencySavings, goalSavings, incomeFlows: newFlows });
+    saveData({ expenses, savings, savingsGoals, balance, emergencySavings, goalSavings, incomeFlows: newFlows, balanceHistory });
   };
 
   const updateIncomeFlow = (id, updates) => {
@@ -137,7 +234,7 @@ export const DataProvider = ({ children }) => {
       f.id === id ? { ...f, ...updates } : f
     );
     setIncomeFlows(newFlows);
-    saveData({ expenses, savings, savingsGoals, balance, emergencySavings, goalSavings, incomeFlows: newFlows });
+    saveData({ expenses, savings, savingsGoals, balance, emergencySavings, goalSavings, incomeFlows: newFlows, balanceHistory });
   };
 
   return (
@@ -149,13 +246,16 @@ export const DataProvider = ({ children }) => {
       emergencySavings,
       goalSavings,
       incomeFlows,
+      balanceHistory,
       addExpense,
       updateExpense,
       deleteExpense,
+      deleteSaving,
       addSaving,
       createSavingsGoal,
       deleteSavingsGoal,
       addBalance,
+      deleteBalanceHistory,
       updateEmergencySavings,
       addGoalSaving,
       updateGoalSaving,

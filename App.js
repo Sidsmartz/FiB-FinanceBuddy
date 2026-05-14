@@ -7,7 +7,7 @@ import * as Font from 'expo-font';
 import DashboardScreen from './screens/DashboardScreen';
 import ExpenseScreen from './screens/ExpenseScreen';
 import GoalsScreen from './screens/GoalsScreen';
-import IncomeScreen from './screens/IncomeScreen';
+import TransactionsScreen from './screens/TransactionsScreen';
 import { DataProvider } from './context/DataContext';
 
 const Tab = createBottomTabNavigator();
@@ -87,11 +87,11 @@ export default function App() {
             }}
           />
           <Tab.Screen 
-            name="Income" 
-            component={IncomeScreen}
+            name="Transactions" 
+            component={TransactionsScreen}
             options={{
               tabBarIcon: ({ color, size }) => (
-                <Ionicons name="trending-up" size={size} color={color} />
+                <Ionicons name="list" size={size} color={color} />
               ),
             }}
           />
