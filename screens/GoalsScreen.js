@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Modal,
 import { useData } from '../context/DataContext';
 import * as Animatable from 'react-native-animatable';
 import { useIsFocused } from '@react-navigation/native';
+import CoinJar from '../components/CoinJar';
+import PiggyBank from '../components/PiggyBank';
 
 export default function GoalsScreen() {
   const { savingsGoals, createSavingsGoal, deleteSavingsGoal } = useData();
@@ -43,22 +45,22 @@ export default function GoalsScreen() {
     <ScrollView style={styles.container}>
       {showSuccess && (
         <Animatable.View animation="bounceIn" style={styles.successBanner}>
-          <Text style={styles.successText}>Γ£ô GOAL CREATED!</Text>
+          <Text style={styles.successText}>✔ GOAL CREATED!</Text>
         </Animatable.View>
       )}
 
-      <Animatable.View key={`total-${animKey}`} animation="fadeInDown" delay={100} style={styles.boxGreen}>
-        <Text style={styles.title}>TOTAL SAVINGS.</Text>
-        <Text style={styles.amountGreen}>Γé╣{totalSaved.toFixed(2)}</Text>
+      <Animatable.View key={`jar-${animKey}`} animation="fadeIn" delay={150} style={styles.jarContainer}>
+        <PiggyBank size={280} totalSaved={totalSaved} />
+        <Text style={styles.jarHint}>drag to rotate</Text>
       </Animatable.View>
 
-      <Animatable.View key={`create-${animKey}`} animation="fadeInDown" delay={150} style={styles.boxCreate}>
+      <Animatable.View key={`create-${animKey}`} animation="fadeInDown" delay={200} style={styles.boxCreate}>
         <TouchableOpacity onPress={() => setShowCreateModal(true)}>
           <Text style={styles.createText}>+ CREATE NEW SAVINGS GOAL</Text>
         </TouchableOpacity>
       </Animatable.View>
 
-      <Animatable.View key={`goals-${animKey}`} animation="fadeInUp" delay={200} style={styles.box}>
+      <Animatable.View key={`goals-${animKey}`} animation="fadeInUp" delay={250} style={styles.box}>
         <Text style={styles.title}>SAVINGS GOALS.</Text>
         {savingsGoals.length === 0 ? (
           <Text style={styles.emptyText}>No savings goals yet. Create one above!</Text>
@@ -85,12 +87,12 @@ export default function GoalsScreen() {
                   }}
                   style={styles.deleteButton}
                 >
-                  <Text style={styles.deleteText}>├ù</Text>
+                  <Text style={styles.deleteText}>×</Text>
                 </TouchableOpacity>
               </View>
               <Text style={styles.goalAmount}>
-                Γé╣{goal.current.toFixed(2)}
-                {goal.target && ` / Γé╣${goal.target.toFixed(2)}`}
+                ₹{goal.current.toFixed(2)}
+                {goal.target && ` / ₹${goal.target.toFixed(2)}`}
               </Text>
               {goal.target && (
                 <View style={styles.progressBar}>
@@ -156,6 +158,18 @@ export default function GoalsScreen() {
 }
 
 const styles = StyleSheet.create({
+  jarContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingVertical: 10,
+  },
+  jarHint: {
+    color: '#333333',
+    fontFamily: 'UbuntuMono',
+    fontSize: 10,
+    marginTop: 8,
+    letterSpacing: 1,
+  },
   container: {
     flex: 1,
     backgroundColor: '#000000',

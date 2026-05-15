@@ -44,7 +44,7 @@ const TapRupee = ({ x, y, id, onComplete }) => {
         },
       ]}
     >
-      Γé╣
+      ₹
     </Animated.Text>
   );
 };
@@ -274,7 +274,7 @@ export default function DashboardScreen() {
           {/* Month Navigation */}
           <Animatable.View key={`month-${animKey}`} animation="fadeInDown" delay={100} style={styles.monthNav}>
             <TouchableOpacity onPress={goToPreviousMonth} style={styles.navButton}>
-              <Text style={styles.navArrow}>Γùä</Text>
+              <Text style={styles.navArrow}>◄</Text>
             </TouchableOpacity>
             <Text style={styles.monthLabel}>{getMonthLabel()}</Text>
             <TouchableOpacity 
@@ -282,7 +282,7 @@ export default function DashboardScreen() {
               style={styles.navButton}
               disabled={selectedYear === new Date().getFullYear() && selectedMonth === new Date().getMonth()}
             >
-              <Text style={[styles.navArrow, (selectedYear === new Date().getFullYear() && selectedMonth === new Date().getMonth()) && styles.navDisabled]}>Γû║</Text>
+              <Text style={[styles.navArrow, (selectedYear === new Date().getFullYear() && selectedMonth === new Date().getMonth()) && styles.navDisabled]}>►</Text>
             </TouchableOpacity>
           </Animatable.View>
 
@@ -295,18 +295,18 @@ export default function DashboardScreen() {
           {isCurrentMonth && (
             <Animatable.View key={`balance-${animKey}`} animation="fadeInUp" delay={200} style={styles.box}>
               <Text style={styles.title}>BALANCE.</Text>
-              <Text style={styles.amount}>Γé╣{balance.toFixed(2)}</Text>
+              <Text style={styles.amount}>₹{balance.toFixed(2)}</Text>
             </Animatable.View>
           )}
 
           <Animatable.View key={`spent-${animKey}`} animation="fadeInUp" delay={isCurrentMonth ? 400 : 200} style={styles.box}>
             <Text style={styles.title}>SPENT THIS MONTH.</Text>
-            <Text style={styles.amount}>Γé╣{totalSpent.toFixed(2)}</Text>
+            <Text style={styles.amount}>₹{totalSpent.toFixed(2)}</Text>
         </Animatable.View>
 
         <Animatable.View key={`saved-${animKey}`} animation="fadeInUp" delay={isCurrentMonth ? 500 : 300} style={styles.boxGreen}>
             <Text style={styles.title}>SAVED THIS MONTH.</Text>
-            <Text style={styles.amountGreen}>Γé╣{totalSaved.toFixed(2)}</Text>
+            <Text style={styles.amountGreen}>₹{totalSaved.toFixed(2)}</Text>
         </Animatable.View>
 
         {/* Last 7 days - only for current month */}
@@ -422,13 +422,13 @@ export default function DashboardScreen() {
                   </Text>
                 </View>
                 <View style={styles.expenseRight}>
-                  <Text style={styles.expenseAmount}>Γé╣{exp.amount}</Text>
+                  <Text style={styles.expenseAmount}>₹{exp.amount}</Text>
                   <View style={styles.expenseActions}>
                     <TouchableOpacity onPress={() => handleEditExpense(exp)} style={styles.actionButton}>
-                      <Text style={styles.actionText}>Γ£Ä</Text>
+                      <Text style={styles.actionText}>✎</Text>
                     </TouchableOpacity>
                     <TouchableOpacity onPress={() => handleDeleteExpense(exp.id)} style={styles.actionButton}>
-                      <Text style={styles.deleteActionText}>├ù</Text>
+                      <Text style={styles.deleteActionText}>×</Text>
                     </TouchableOpacity>
                   </View>
                 </View>

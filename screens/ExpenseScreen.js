@@ -92,7 +92,7 @@ export default function ExpenseScreen() {
     <ScrollView style={styles.container}>
       {showSuccess && (
         <Animatable.View animation="bounceIn" style={styles.successBanner}>
-          <Text style={styles.successText}>Γ£ô SUCCESS!</Text>
+          <Text style={styles.successText}>✔ SUCCESS!</Text>
         </Animatable.View>
       )}
 
@@ -298,7 +298,7 @@ export default function ExpenseScreen() {
                       <View>
                         <Text style={styles.categoryText}>{goal.name}</Text>
                         <Text style={styles.goalProgress}>
-                          Γé╣{goal.current.toFixed(2)}{goal.target ? ` / Γé╣${goal.target.toFixed(2)}` : ''}
+                          ₹{goal.current.toFixed(2)}{goal.target ? ` / ₹${goal.target.toFixed(2)}` : ''}
                         </Text>
                       </View>
                     </TouchableOpacity>
