@@ -15,4 +15,8 @@ if (typeof global.URL === 'undefined') {
 const { registerRootComponent } = require('expo');
 const { default: App } = require('./App');
 
+// Register the Android widget task handler so it is available
+// when Android wakes the JS runtime to update the widget (req 2.1, 2.4)
+require('./widget/FiBWidget');
+
 registerRootComponent(App);

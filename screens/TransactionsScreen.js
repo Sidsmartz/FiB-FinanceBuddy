@@ -8,8 +8,10 @@ import * as Animatable from 'react-native-animatable';
 import { useIsFocused } from '@react-navigation/native';
 import { useData } from '../context/DataContext';
 
+import { CATEGORIES as BASE_CATEGORIES } from '../constants/categories';
+
 const TABS = ['EXPENSES', 'BALANCE', 'SAVINGS'];
-const CATEGORIES = ['All', 'Books', 'Food', 'Gifts', 'Movies', 'Groceries', 'Transport', 'Entertainment', 'Others'];
+const CATEGORIES = ['All', ...BASE_CATEGORIES];
 
 function formatDate(iso) {
   const d = new Date(iso);

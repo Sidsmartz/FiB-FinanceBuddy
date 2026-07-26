@@ -1,9 +1,22 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { validatePersistedData, applyUpdateExpense, applyDeleteSavingsGoal } from '../utils/dataLogic';
+
+const STORAGE_KEY = 'financeData';
+const WIDGET_BALANCE_KEY = 'fibWidgetBalance';
 
 const DataContext = createContext();
 
 export const useData = () => useContext(DataContext);
+
+// ─── Widget balance helper ────────────────────────────────────────────────────
+async function _writeWidgetBalance(newBalance) {
+  try {
+    await AsyncStorage.setItem(WIDGET_BALANCE_KEY, JSON.stringify(newBalance));
+  } catch (err) {
+    console.error('[FiB] Failed to write widget balance:', err);
+  }
+}
 
 export const DataProvider = ({ children }) => {
   const [expenses, setExpenses] = useState([]);
@@ -14,6 +27,8 @@ export const DataProvider = ({ children }) => {
   const [goalSavings, setGoalSavings] = useState([]);
   const [incomeFlows, setIncomeFlows] = useState([]);
   const [balanceHistory, setBalanceHistory] = useState([]);
+  /** Non-null when the last AsyncStorage write failed */
+  const [storageError, setStorageError] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -21,52 +36,61 @@ export const DataProvider = ({ children }) => {
 
   const loadData = async () => {
     try {
-      const data = await AsyncStorage.getItem('financeData');
-      if (data) {
-        const parsed = JSON.parse(data);
-        setExpenses(parsed.expenses || []);
-        setSavings(parsed.savings || []);
-        setSavingsGoals(parsed.savingsGoals || []);
-        setBalance(parsed.balance || 0);
-        setEmergencySavings(parsed.emergencySavings || 0);
-        setGoalSavings(parsed.goalSavings || []);
-        setIncomeFlows(parsed.incomeFlows || []);
-        setBalanceHistory(parsed.balanceHistory || []);
+      const raw = await AsyncStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        const validated = validatePersistedData(parsed);
+        setExpenses(validated.expenses);
+        setSavings(validated.savings);
+        setSavingsGoals(validated.savingsGoals);
+        setBalance(validated.balance);
+        setEmergencySavings(validated.emergencySavings);
+        setGoalSavings(validated.goalSavings);
+        setIncomeFlows(validated.incomeFlows);
+        setBalanceHistory(validated.balanceHistory);
       }
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('[FiB] Error loading data:', error);
     }
   };
 
-  const saveData = async (data) => {
-    try {
-      await AsyncStorage.setItem('financeData', JSON.stringify(data));
-    } catch (error) {
-      console.error('Error saving data:', error);
-    }
-  };
-
-  const persistData = ({
-    expensesData = expenses,
-    savingsData = savings,
-    savingsGoalsData = savingsGoals,
-    balanceData = balance,
+  // ─── Core persist helper ───────────────────────────────────────────────────
+  /**
+   * Assembles the full state payload and writes to AsyncStorage.
+   * All mutations MUST go through this. Requirements: 3.2
+   */
+  const persistData = useCallback(async ({
+    expensesData       = expenses,
+    savingsData        = savings,
+    savingsGoalsData   = savingsGoals,
+    balanceData        = balance,
     emergencySavingsData = emergencySavings,
-    goalSavingsData = goalSavings,
-    incomeFlowsData = incomeFlows,
+    goalSavingsData    = goalSavings,
+    incomeFlowsData    = incomeFlows,
     balanceHistoryData = balanceHistory,
   }) => {
-    saveData({
-      expenses: expensesData,
-      savings: savingsData,
-      savingsGoals: savingsGoalsData,
-      balance: balanceData,
+    const payload = {
+      expenses:         expensesData,
+      savings:          savingsData,
+      savingsGoals:     savingsGoalsData,
+      balance:          balanceData,
       emergencySavings: emergencySavingsData,
-      goalSavings: goalSavingsData,
-      incomeFlows: incomeFlowsData,
-      balanceHistory: balanceHistoryData
-    });
-  };
+      goalSavings:      goalSavingsData,
+      incomeFlows:      incomeFlowsData,
+      balanceHistory:   balanceHistoryData,
+    };
+    try {
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      setStorageError(null);
+    } catch (err) {
+      console.error('[FiB] Failed to persist data:', err);
+      setStorageError(err.message ?? 'Storage write failed');
+    }
+    // Keep widget balance in sync on every write
+    await _writeWidgetBalance(balanceData);
+  }, [expenses, savings, savingsGoals, balance, emergencySavings, goalSavings, incomeFlows, balanceHistory]);
+
+  // ─── Mutations ─────────────────────────────────────────────────────────────
 
   const addExpense = (expense) => {
     const newExpenses = [...expenses, { ...expense, id: Date.now().toString() }];
@@ -77,60 +101,40 @@ export const DataProvider = ({ children }) => {
   };
 
   const updateExpense = (id, updatedExpense) => {
-    const oldExpense = expenses.find(e => e.id === id);
-    const newExpenses = expenses.map(e => e.id === id ? { ...updatedExpense, id } : e);
+    const { expenses: newExpenses, balance: newBalance } = applyUpdateExpense(expenses, balance, id, updatedExpense);
     setExpenses(newExpenses);
-    // Adjust balance: add back old amount, subtract new amount
-    const newBalance = balance + oldExpense.amount - updatedExpense.amount;
     setBalance(newBalance);
-    saveData({ expenses: newExpenses, savings, savingsGoals, balance: newBalance, emergencySavings, goalSavings, incomeFlows, balanceHistory });
+    persistData({ expensesData: newExpenses, balanceData: newBalance });
   };
 
   const deleteExpense = (id) => {
     const expense = expenses.find(e => e.id === id);
     if (!expense) return;
-    
     const newExpenses = expenses.filter(e => e.id !== id);
     const newBalance = balance + expense.amount;
-    
     setExpenses(newExpenses);
     setBalance(newBalance);
-    
-    persistData({
-      expensesData: newExpenses,
-      balanceData: newBalance
-    });
+    persistData({ expensesData: newExpenses, balanceData: newBalance });
   };
 
   const deleteSaving = (id) => {
     const saving = savings.find(s => s.id === id);
     if (!saving) return;
-    
     const newSavings = savings.filter(s => s.id !== id);
     const newBalance = balance + saving.amount;
-    
     setSavings(newSavings);
     setBalance(newBalance);
-    
+
     if (saving.goalId) {
-      const newGoals = savingsGoals.map(g => 
-        g.id === saving.goalId 
-          ? { ...g, current: Math.max(0, g.current - saving.amount) } 
+      const newGoals = savingsGoals.map(g =>
+        g.id === saving.goalId
+          ? { ...g, current: Math.max(0, g.current - saving.amount) }
           : g
       );
-      
       setSavingsGoals(newGoals);
-      
-      persistData({
-        savingsData: newSavings,
-        savingsGoalsData: newGoals,
-        balanceData: newBalance
-      });
+      persistData({ savingsData: newSavings, savingsGoalsData: newGoals, balanceData: newBalance });
     } else {
-      persistData({
-        savingsData: newSavings,
-        balanceData: newBalance
-      });
+      persistData({ savingsData: newSavings, balanceData: newBalance });
     }
   };
 
@@ -139,23 +143,15 @@ export const DataProvider = ({ children }) => {
     const newBalance = balance - saving.amount;
     setSavings(newSavings);
     setBalance(newBalance);
-    
-    // Update the savings goal amount
+
     if (saving.goalId) {
-      const newGoals = savingsGoals.map(g => 
+      const newGoals = savingsGoals.map(g =>
         g.id === saving.goalId ? { ...g, current: g.current + saving.amount } : g
       );
       setSavingsGoals(newGoals);
-      persistData({ 
-        savingsData: newSavings, 
-        savingsGoalsData: newGoals, 
-        balanceData: newBalance 
-      });
+      persistData({ savingsData: newSavings, savingsGoalsData: newGoals, balanceData: newBalance });
     } else {
-      persistData({ 
-        savingsData: newSavings, 
-        balanceData: newBalance 
-      });
+      persistData({ savingsData: newSavings, balanceData: newBalance });
     }
   };
 
@@ -167,74 +163,68 @@ export const DataProvider = ({ children }) => {
   };
 
   const deleteSavingsGoal = (id) => {
-    const newGoals = savingsGoals.filter(g => g.id !== id);
+    const { savingsGoals: newGoals, savings: newSavings, balance: newBalance } =
+      applyDeleteSavingsGoal(savingsGoals, savings, balance, id);
     setSavingsGoals(newGoals);
-    saveData({ expenses, savings, savingsGoals: newGoals, balance, emergencySavings, goalSavings, incomeFlows, balanceHistory });
+    setSavings(newSavings);
+    setBalance(newBalance);
+    persistData({ savingsGoalsData: newGoals, savingsData: newSavings, balanceData: newBalance });
   };
 
   const addBalance = (amount, title = 'Balance Added') => {
     const newBalance = balance + amount;
-    const newHistory = [...balanceHistory, { 
-      id: Date.now().toString(), 
-      title, 
-      amount, 
-      date: new Date().toISOString() 
+    const newHistory = [...balanceHistory, {
+      id: Date.now().toString(),
+      title,
+      amount,
+      date: new Date().toISOString(),
     }];
     setBalance(newBalance);
     setBalanceHistory(newHistory);
-    persistData({ 
-      balanceData: newBalance, 
-      balanceHistoryData: newHistory 
-    });
+    persistData({ balanceData: newBalance, balanceHistoryData: newHistory });
   };
 
   const deleteBalanceHistory = (id) => {
     const item = balanceHistory.find(b => b.id === id);
     if (!item) return;
-    
     const newHistory = balanceHistory.filter(b => b.id !== id);
     const newBalance = balance - item.amount;
-    
     setBalanceHistory(newHistory);
     setBalance(newBalance);
-    
-    persistData({
-      balanceHistoryData: newHistory,
-      balanceData: newBalance
-    });
+    persistData({ balanceHistoryData: newHistory, balanceData: newBalance });
   };
 
   const updateEmergencySavings = (amount) => {
     setEmergencySavings(amount);
-    saveData({ expenses, savings, savingsGoals, balance, emergencySavings: amount, goalSavings, incomeFlows, balanceHistory });
+    persistData({ emergencySavingsData: amount });
   };
 
   const addGoalSaving = (goal) => {
     const newGoals = [...goalSavings, { ...goal, id: Date.now(), current: 0 }];
     setGoalSavings(newGoals);
-    saveData({ expenses, savings, savingsGoals, balance, emergencySavings, goalSavings: newGoals, incomeFlows, balanceHistory });
+    persistData({ goalSavingsData: newGoals });
   };
 
   const updateGoalSaving = (id, amount) => {
-    const newGoals = goalSavings.map(g => 
+    const newGoals = goalSavings.map(g =>
       g.id === id ? { ...g, current: g.current + amount } : g
     );
     setGoalSavings(newGoals);
-    saveData({ expenses, savings, savingsGoals, balance, emergencySavings, goalSavings: newGoals, incomeFlows, balanceHistory });
+    persistData({ goalSavingsData: newGoals });
   };
 
   const addIncomeFlow = (flow) => {
     const newFlows = [...incomeFlows, { ...flow, id: Date.now() }];
     setIncomeFlows(newFlows);
-    saveData({ expenses, savings, savingsGoals, balance, emergencySavings, goalSavings, incomeFlows: newFlows, balanceHistory });
+    persistData({ incomeFlowsData: newFlows });
   };
 
   const updateIncomeFlow = (id, updates) => {
-    const newFlows = incomeFlows.map(f => 
+    const newFlows = incomeFlows.map(f =>
       f.id === id ? { ...f, ...updates } : f
     );
     setIncomeFlows(newFlows);
-    saveData({ expenses, savings, savingsGoals, balance, emergencySavings, goalSavings, incomeFlows: newFlows, balanceHistory });
+    persistData({ incomeFlowsData: newFlows });
   };
 
   return (
@@ -247,6 +237,7 @@ export const DataProvider = ({ children }) => {
       goalSavings,
       incomeFlows,
       balanceHistory,
+      storageError,
       addExpense,
       updateExpense,
       deleteExpense,
@@ -266,3 +257,4 @@ export const DataProvider = ({ children }) => {
     </DataContext.Provider>
   );
 };
+

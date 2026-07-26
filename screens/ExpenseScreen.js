@@ -1,14 +1,102 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Modal, Platform } from 'react-native';
+import {
+  View, Text, StyleSheet, TextInput, TouchableOpacity,
+  ScrollView, Modal, Platform, FlatList,
+} from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useData } from '../context/DataContext';
 import * as Animatable from 'react-native-animatable';
 import { useIsFocused } from '@react-navigation/native';
+import { CATEGORIES } from '../constants/categories';
+import { validateAmount, sanitizeTitle, isNonEmptyTitle } from '../utils/validation';
 
-const CATEGORIES = ['Books', 'Food', 'Gifts', 'Movies', 'Groceries', 'Transport', 'Entertainment', 'Others'];
+// ─── Quick-Log Section ────────────────────────────────────────────────────────
 
-export default function ExpenseScreen() {
-  const { addExpense, addSaving, addBalance, savingsGoals } = useData();
+function QuickLogSection({ onSuccess }) {
+  const { addExpense } = useData();
+  const [amount, setAmount] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [error, setError] = useState('');
+
+  const canLog = validateAmount(amount) && selectedCategory !== '';
+
+  const handleLog = () => {
+    if (!validateAmount(amount)) {
+      setError('Enter a valid amount (e.g. 50)');
+      return;
+    }
+    if (!selectedCategory) {
+      setError('Select a category');
+      return;
+    }
+    setError('');
+    addExpense({
+      title: `${selectedCategory} expense`,
+      amount: parseFloat(amount),
+      category: selectedCategory,
+      split: 0,
+      date: new Date().toISOString(),
+    });
+    setAmount('');
+    setSelectedCategory('');
+    onSuccess();
+  };
+
+  const handleAmountChange = (v) => {
+    setAmount(v);
+    if (error) setError('');
+  };
+
+  return (
+    <View style={styles.quickBox}>
+      <Text style={styles.sectionTitle}>QUICK LOG.</Text>
+
+      <TextInput
+        style={[styles.input, error && !validateAmount(amount) ? styles.inputError : null]}
+        placeholder="Amount  ₹"
+        placeholderTextColor="#444444"
+        value={amount}
+        onChangeText={handleAmountChange}
+        keyboardType="numeric"
+        autoFocus={false}
+      />
+
+      {/* 2-column category grid */}
+      <View style={styles.catGrid}>
+        {CATEGORIES.map((cat) => (
+          <TouchableOpacity
+            key={cat}
+            style={[styles.catChip, selectedCategory === cat && styles.catChipActive]}
+            onPress={() => {
+              setSelectedCategory(cat);
+              if (error) setError('');
+            }}
+          >
+            <Text style={[styles.catChipText, selectedCategory === cat && styles.catChipTextActive]}>
+              {cat}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {error !== '' && <Text style={styles.errorText}>{error}</Text>}
+
+      <TouchableOpacity
+        style={[styles.button, !canLog && styles.buttonDisabled]}
+        onPress={handleLog}
+        disabled={!canLog}
+      >
+        <Text style={[styles.buttonText, !canLog && styles.buttonTextDisabled]}>LOG</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+// ─── Full-Log Section (collapsible) ──────────────────────────────────────────
+
+function FullLogSection({ onSuccess }) {
+  const { addExpense } = useData();
+  const [expanded, setExpanded] = useState(false);
   const [title, setTitle] = useState('');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('');
@@ -16,6 +104,117 @@ export default function ExpenseScreen() {
   const [date, setDate] = useState(new Date());
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showDateModal, setShowDateModal] = useState(false);
+
+  const handleAddExpense = () => {
+    const cleanTitle = sanitizeTitle(title);
+    if (!isNonEmptyTitle(cleanTitle) || !validateAmount(amount) || !category) {
+      // inline error — no alert()
+      return;
+    }
+    addExpense({
+      title: cleanTitle,
+      amount: parseFloat(amount),
+      category,
+      split: split ? parseFloat(split) : 0,
+      date: date.toISOString(),
+    });
+    setTitle(''); setAmount(''); setCategory(''); setSplit(''); setDate(new Date());
+    onSuccess();
+  };
+
+  return (
+    <View style={styles.box}>
+      <TouchableOpacity onPress={() => setExpanded(e => !e)} style={styles.toggleRow}>
+        <Text style={styles.sectionTitle}>FULL LOG.</Text>
+        <Text style={styles.toggleArrow}>{expanded ? '▲' : '▼'}</Text>
+      </TouchableOpacity>
+
+      {expanded && (
+        <>
+          <TextInput
+            style={styles.input}
+            placeholder="Title"
+            placeholderTextColor="#444444"
+            value={title}
+            onChangeText={setTitle}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Amount"
+            placeholderTextColor="#444444"
+            value={amount}
+            onChangeText={setAmount}
+            keyboardType="numeric"
+          />
+          <TouchableOpacity style={styles.input} onPress={() => setShowCategoryModal(true)}>
+            <Text style={[styles.inputText, !category && styles.placeholder]}>
+              {category || 'Select Category'}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.input} onPress={() => setShowDateModal(true)}>
+            <Text style={styles.inputText}>
+              {date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+            </Text>
+          </TouchableOpacity>
+          {showDateModal && (
+            <DateTimePicker
+              value={date}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={(event, selectedDate) => {
+                setShowDateModal(Platform.OS === 'ios');
+                if (selectedDate) setDate(selectedDate);
+              }}
+              maximumDate={new Date()}
+            />
+          )}
+          <TextInput
+            style={styles.input}
+            placeholder="Split Amount (optional)"
+            placeholderTextColor="#444444"
+            value={split}
+            onChangeText={setSplit}
+            keyboardType="numeric"
+          />
+          <TouchableOpacity style={styles.button} onPress={handleAddExpense}>
+            <Text style={styles.buttonText}>LOG EXPENSE</Text>
+          </TouchableOpacity>
+        </>
+      )}
+
+      <Modal
+        visible={showCategoryModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowCategoryModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <Animatable.View animation="zoomIn" duration={300} style={styles.modalBox}>
+            <Text style={styles.modalTitle}>SELECT CATEGORY.</Text>
+            {CATEGORIES.map((cat, idx) => (
+              <Animatable.View key={cat} animation="fadeInRight" delay={idx * 50}>
+                <TouchableOpacity
+                  style={styles.categoryItem}
+                  onPress={() => { setCategory(cat); setShowCategoryModal(false); }}
+                >
+                  <Text style={styles.categoryText}>{cat}</Text>
+                </TouchableOpacity>
+              </Animatable.View>
+            ))}
+            <TouchableOpacity style={styles.closeButton} onPress={() => setShowCategoryModal(false)}>
+              <Text style={styles.buttonText}>CLOSE</Text>
+            </TouchableOpacity>
+          </Animatable.View>
+        </View>
+      </Modal>
+    </View>
+  );
+}
+
+// ─── Main Screen ──────────────────────────────────────────────────────────────
+
+export default function ExpenseScreen() {
+  const { addSaving, addBalance, savingsGoals } = useData();
   const [balanceTitle, setBalanceTitle] = useState('');
   const [balanceAmount, setBalanceAmount] = useState('');
   const [savingAmount, setSavingAmount] = useState('');
@@ -28,64 +227,35 @@ export default function ExpenseScreen() {
   const isFocused = useIsFocused();
 
   React.useEffect(() => {
-    if (isFocused) {
-      setAnimKey(prev => prev + 1);
-    }
+    if (isFocused) setAnimKey(prev => prev + 1);
   }, [isFocused]);
 
-  const handleAddExpense = () => {
-    if (!title || !amount || !category) {
-      alert('Please fill all required fields');
-      return;
-    }
-
-    addExpense({
-      title,
-      amount: parseFloat(amount),
-      category,
-      split: split ? parseFloat(split) : 0,
-      date: date.toISOString(),
-    });
-
-    setTitle('');
-    setAmount('');
-    setCategory('');
-    setSplit('');
-    setDate(new Date());
+  const showSuccessBanner = () => {
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 2000);
   };
 
   const handleAddBalance = () => {
-    if (!balanceAmount || !balanceTitle) {
-      alert('Please fill all fields');
-      return;
-    }
-    addBalance(parseFloat(balanceAmount), balanceTitle);
+    const cleanTitle = sanitizeTitle(balanceTitle);
+    if (!validateAmount(balanceAmount) || !isNonEmptyTitle(cleanTitle)) return;
+    addBalance(parseFloat(balanceAmount), cleanTitle);
     setBalanceAmount('');
     setBalanceTitle('');
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 2000);
+    showSuccessBanner();
   };
 
   const handleAddSaving = () => {
-    if (!savingAmount || !savingGoal) {
-      alert('Please fill all required fields');
-      return;
-    }
-
+    if (!validateAmount(savingAmount) || !savingGoal) return;
     addSaving({
       title: savingGoal.name,
       amount: parseFloat(savingAmount),
       date: savingDate.toISOString(),
       goalId: savingGoal.id,
     });
-
     setSavingAmount('');
     setSavingDate(new Date());
     setSavingGoal(null);
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 2000);
+    showSuccessBanner();
   };
 
   return (
@@ -96,8 +266,19 @@ export default function ExpenseScreen() {
         </Animatable.View>
       )}
 
-      <Animatable.View key={`balance-${animKey}`} animation="fadeInDown" delay={100} style={styles.box}>
-        <Text style={styles.title}>ADD BALANCE.</Text>
+      {/* ── Quick-Log (top) ── */}
+      <Animatable.View key={`quick-${animKey}`} animation="fadeInDown" delay={80}>
+        <QuickLogSection onSuccess={showSuccessBanner} />
+      </Animatable.View>
+
+      {/* ── Full-Log (collapsible) ── */}
+      <Animatable.View key={`full-${animKey}`} animation="fadeInDown" delay={140}>
+        <FullLogSection onSuccess={showSuccessBanner} />
+      </Animatable.View>
+
+      {/* ── Add Balance ── */}
+      <Animatable.View key={`balance-${animKey}`} animation="fadeInDown" delay={200} style={styles.box}>
+        <Text style={styles.sectionTitle}>ADD BALANCE.</Text>
         <TextInput
           style={styles.input}
           placeholder="Title (e.g., Salary, Gift)"
@@ -118,18 +299,14 @@ export default function ExpenseScreen() {
         </TouchableOpacity>
       </Animatable.View>
 
-      <Animatable.View key={`saving-${animKey}`} animation="fadeInDown" delay={150} style={styles.boxGreen}>
-        <Text style={styles.title}>ADD TO SAVINGS.</Text>
-        
-        <TouchableOpacity 
-          style={styles.input} 
-          onPress={() => setShowGoalModal(true)}
-        >
+      {/* ── Add to Savings ── */}
+      <Animatable.View key={`saving-${animKey}`} animation="fadeInDown" delay={250} style={styles.boxGreen}>
+        <Text style={styles.sectionTitle}>ADD TO SAVINGS.</Text>
+        <TouchableOpacity style={styles.input} onPress={() => setShowGoalModal(true)}>
           <Text style={[styles.inputText, !savingGoal && styles.placeholder]}>
             {savingGoal ? savingGoal.name : 'Select Savings Goal'}
           </Text>
         </TouchableOpacity>
-
         <TextInput
           style={styles.input}
           placeholder="Amount"
@@ -138,15 +315,11 @@ export default function ExpenseScreen() {
           onChangeText={setSavingAmount}
           keyboardType="numeric"
         />
-        <TouchableOpacity 
-          style={styles.input} 
-          onPress={() => setShowSavingDateModal(true)}
-        >
+        <TouchableOpacity style={styles.input} onPress={() => setShowSavingDateModal(true)}>
           <Text style={styles.inputText}>
             {savingDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
           </Text>
         </TouchableOpacity>
-
         {showSavingDateModal && (
           <DateTimePicker
             value={savingDate}
@@ -154,9 +327,7 @@ export default function ExpenseScreen() {
             display={Platform.OS === 'ios' ? 'spinner' : 'default'}
             onChange={(event, selectedDate) => {
               setShowSavingDateModal(Platform.OS === 'ios');
-              if (selectedDate) {
-                setSavingDate(selectedDate);
-              }
+              if (selectedDate) setSavingDate(selectedDate);
             }}
             maximumDate={new Date()}
           />
@@ -166,109 +337,7 @@ export default function ExpenseScreen() {
         </TouchableOpacity>
       </Animatable.View>
 
-      <Animatable.View key={`expense-${animKey}`} animation="fadeInUp" delay={200} style={styles.box}>
-        <Text style={styles.title}>LOG EXPENSE.</Text>
-        
-        <TextInput
-          style={styles.input}
-          placeholder="Title"
-          placeholderTextColor="#444444"
-          value={title}
-          onChangeText={setTitle}
-        />
-
-        <TextInput
-          style={styles.input}
-          placeholder="Amount"
-          placeholderTextColor="#444444"
-          value={amount}
-          onChangeText={setAmount}
-          keyboardType="numeric"
-        />
-
-        <TouchableOpacity 
-          style={styles.input} 
-          onPress={() => setShowCategoryModal(true)}
-        >
-          <Text style={[styles.inputText, !category && styles.placeholder]}>
-            {category || 'Select Category'}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={styles.input} 
-          onPress={() => setShowDateModal(true)}
-        >
-          <Text style={styles.inputText}>
-            {date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-          </Text>
-        </TouchableOpacity>
-
-        {showDateModal && (
-          <DateTimePicker
-            value={date}
-            mode="date"
-            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-            onChange={(event, selectedDate) => {
-              setShowDateModal(Platform.OS === 'ios');
-              if (selectedDate) {
-                setDate(selectedDate);
-              }
-            }}
-            maximumDate={new Date()}
-          />
-        )}
-
-        <TextInput
-          style={styles.input}
-          placeholder="Split Amount (optional)"
-          placeholderTextColor="#444444"
-          value={split}
-          onChangeText={setSplit}
-          keyboardType="numeric"
-        />
-
-        <TouchableOpacity style={styles.button} onPress={handleAddExpense}>
-          <Text style={styles.buttonText}>LOG EXPENSE</Text>
-        </TouchableOpacity>
-      </Animatable.View>
-
-      <Modal
-        visible={showCategoryModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowCategoryModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <Animatable.View animation="zoomIn" duration={300} style={styles.modalBox}>
-            <Text style={styles.modalTitle}>SELECT CATEGORY.</Text>
-            {CATEGORIES.map((cat, idx) => (
-              <Animatable.View
-                key={cat}
-                animation="fadeInRight"
-                delay={idx * 50}
-              >
-                <TouchableOpacity
-                  style={styles.categoryItem}
-                  onPress={() => {
-                    setCategory(cat);
-                    setShowCategoryModal(false);
-                  }}
-                >
-                  <Text style={styles.categoryText}>{cat}</Text>
-                </TouchableOpacity>
-              </Animatable.View>
-            ))}
-            <TouchableOpacity 
-              style={styles.closeButton}
-              onPress={() => setShowCategoryModal(false)}
-            >
-              <Text style={styles.buttonText}>CLOSE</Text>
-            </TouchableOpacity>
-          </Animatable.View>
-        </View>
-      </Modal>
-
+      {/* Goal picker modal */}
       <Modal
         visible={showGoalModal}
         transparent
@@ -283,33 +352,21 @@ export default function ExpenseScreen() {
                 <Text style={styles.emptyText}>No goals yet. Create one in Goals tab!</Text>
               ) : (
                 savingsGoals.map((goal, idx) => (
-                  <Animatable.View
-                    key={goal.id}
-                    animation="fadeInRight"
-                    delay={idx * 50}
-                  >
+                  <Animatable.View key={goal.id} animation="fadeInRight" delay={idx * 50}>
                     <TouchableOpacity
                       style={styles.categoryItem}
-                      onPress={() => {
-                        setSavingGoal(goal);
-                        setShowGoalModal(false);
-                      }}
+                      onPress={() => { setSavingGoal(goal); setShowGoalModal(false); }}
                     >
-                      <View>
-                        <Text style={styles.categoryText}>{goal.name}</Text>
-                        <Text style={styles.goalProgress}>
-                          ₹{goal.current.toFixed(2)}{goal.target ? ` / ₹${goal.target.toFixed(2)}` : ''}
-                        </Text>
-                      </View>
+                      <Text style={styles.categoryText}>{goal.name}</Text>
+                      <Text style={styles.goalProgress}>
+                        ₹{goal.current.toFixed(2)}{goal.target ? ` / ₹${goal.target.toFixed(2)}` : ''}
+                      </Text>
                     </TouchableOpacity>
                   </Animatable.View>
                 ))
               )}
             </ScrollView>
-            <TouchableOpacity 
-              style={styles.closeButton}
-              onPress={() => setShowGoalModal(false)}
-            >
+            <TouchableOpacity style={styles.closeButton} onPress={() => setShowGoalModal(false)}>
               <Text style={styles.buttonText}>CLOSE</Text>
             </TouchableOpacity>
           </Animatable.View>
@@ -318,6 +375,8 @@ export default function ExpenseScreen() {
     </ScrollView>
   );
 }
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   container: {
@@ -339,6 +398,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     letterSpacing: 2,
   },
+  quickBox: {
+    borderWidth: 1,
+    borderColor: '#7eb8ff',
+    padding: 20,
+    marginBottom: 20,
+    backgroundColor: '#0a0a0a',
+  },
   box: {
     borderWidth: 1,
     borderColor: '#4a9eff',
@@ -353,12 +419,22 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     backgroundColor: '#0a0a0a',
   },
-  title: {
+  sectionTitle: {
     color: '#ffffff',
     fontFamily: 'PixelFont',
     fontSize: 10,
     letterSpacing: 2,
     marginBottom: 16,
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  toggleArrow: {
+    color: '#7eb8ff',
+    fontFamily: 'PixelFont',
+    fontSize: 10,
   },
   input: {
     borderWidth: 1,
@@ -370,12 +446,49 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000',
     fontSize: 13,
   },
+  inputError: {
+    borderColor: '#ff6b6b',
+  },
   inputText: {
     color: '#ffffff',
     fontFamily: 'UbuntuMono',
   },
   placeholder: {
     color: '#666666',
+  },
+  errorText: {
+    color: '#ff6b6b',
+    fontFamily: 'UbuntuMono',
+    fontSize: 11,
+    marginBottom: 10,
+  },
+  // Category grid — 2 columns
+  catGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 14,
+  },
+  catChip: {
+    width: '48%',
+    borderWidth: 1,
+    borderColor: '#333333',
+    paddingVertical: 10,
+    alignItems: 'center',
+    backgroundColor: '#000000',
+  },
+  catChipActive: {
+    borderColor: '#7eb8ff',
+    backgroundColor: '#0d1f33',
+  },
+  catChipText: {
+    color: '#666666',
+    fontFamily: 'PixelFont',
+    fontSize: 8,
+    letterSpacing: 1,
+  },
+  catChipTextActive: {
+    color: '#7eb8ff',
   },
   button: {
     borderWidth: 1,
@@ -384,11 +497,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#1a1a1a',
   },
+  buttonDisabled: {
+    borderColor: '#333333',
+    backgroundColor: '#0a0a0a',
+  },
   buttonText: {
     color: '#ffffff',
     fontFamily: 'PixelFont',
     fontSize: 10,
     letterSpacing: 1,
+  },
+  buttonTextDisabled: {
+    color: '#444444',
   },
   modalOverlay: {
     flex: 1,

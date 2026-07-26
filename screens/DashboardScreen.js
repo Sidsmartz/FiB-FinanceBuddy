@@ -7,8 +7,9 @@ import BongoCat from '../components/BongoCat';
 import * as Animatable from 'react-native-animatable';
 import { useIsFocused } from '@react-navigation/native';
 
-const CATEGORIES = ['Books', 'Food', 'Gifts', 'Movies', 'Groceries', 'Transport', 'Entertainment', 'Others'];
-const COLORS = ['#7eb8ff', '#5a9eff', '#3d84ff', '#2069ff', '#1a5fd9', '#1450b3', '#0e408c', '#083066'];
+import { CATEGORIES, CATEGORY_COLORS_ARRAY } from '../constants/categories';
+
+const COLORS = CATEGORY_COLORS_ARRAY;
 
 const TapRupee = ({ x, y, id, onComplete }) => {
   const [translateY] = useState(new Animated.Value(0));
