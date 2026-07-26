@@ -2,7 +2,7 @@
   "expo": {
     "name": "FiB - Finance Buddy",
     "slug": "fib-finance-buddy",
-    "version": "1.1.0",
+    "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -25,7 +25,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "package": "com.fib.financebuddy",
-      "versionCode": 2
+      "versionCode": 1
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -50,7 +50,9 @@
               "updatePeriodMillis": 1800000,
               "description": "Shows your balance and lets you log a quick expense",
               "previewImage": "./assets/icon.png",
-              "widgetFeatures": ["reconfigurable"]
+              "widgetFeatures": [
+                "reconfigurable"
+              ]
             }
           ]
         }
