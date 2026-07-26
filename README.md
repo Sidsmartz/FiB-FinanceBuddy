@@ -75,7 +75,7 @@ We are incredibly grateful to the creators who provided open-source or free-to-u
 - **3D Piggy Bank Model**: ["Piggy Bank"](https://sketchfab.com/3d-models/piggy-bank-4d5bf8d42f2d4c3493dc13a168944d64) by Sketchfab users, used as the main visual element for savings.
 - **Fonts**: 
   - *Ubuntu Mono*: Licensed under the [Ubuntu Font License](https://ubuntu.com/legal/font-licence).
-  - *Pixel Font*: Used for our retro/app aesthetic.
+  - *Press Start 2P*: Created by CodeMan38, licensed under the [SIL Open Font License](https://scripts.sil.org/OFL).
 
 ## License
 

@@ -66,15 +66,15 @@ export default function GoalsScreen() {
           <Text style={styles.emptyText}>No savings goals yet. Create one above!</Text>
         ) : (
           savingsGoals.map((goal, idx) => (
-            <Animatable.View 
-              key={goal.id} 
-              animation="fadeInRight" 
+            <Animatable.View
+              key={goal.id}
+              animation="fadeInRight"
               delay={300 + (idx * 100)}
               style={styles.goalItem}
             >
               <View style={styles.goalHeader}>
                 <Text style={styles.goalName}>{goal.name}</Text>
-                <TouchableOpacity 
+                <TouchableOpacity
                   onPress={() => {
                     Alert.alert(
                       'Delete Goal',
@@ -96,11 +96,11 @@ export default function GoalsScreen() {
               </Text>
               {goal.target && (
                 <View style={styles.progressBar}>
-                  <View 
+                  <View
                     style={[
-                      styles.progressFill, 
+                      styles.progressFill,
                       { width: `${Math.min((goal.current / goal.target) * 100, 100)}%` }
-                    ]} 
+                    ]}
                   />
                 </View>
               )}
@@ -138,13 +138,13 @@ export default function GoalsScreen() {
               onChangeText={setNewGoalTarget}
               keyboardType="numeric"
             />
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.button}
               onPress={handleCreateGoal}
             >
               <Text style={styles.buttonText}>CREATE</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.closeButton}
               onPress={() => setShowCreateModal(false)}
             >
@@ -153,6 +153,10 @@ export default function GoalsScreen() {
           </Animatable.View>
         </View>
       </Modal>
+
+      <View style={styles.attributionContainer}>
+        <Text style={styles.attributionText}>Piggy Bank 3D Model by Sketchfab Users</Text>
+      </View>
     </ScrollView>
   );
 }
@@ -338,5 +342,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#1a1a1a',
     marginTop: 12,
+  },
+  attributionContainer: {
+    alignItems: 'center',
+    paddingTop: 10,
+    paddingBottom: 40,
+  },
+  attributionText: {
+    color: '#333333',
+    fontFamily: 'UbuntuMono',
+    fontSize: 10,
   },
 });
