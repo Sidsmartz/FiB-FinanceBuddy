@@ -68,6 +68,15 @@ Contributions, issues, and feature requests are welcome. If you want to help mak
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
+## Credits & Attributions
+
+We are incredibly grateful to the creators who provided open-source or free-to-use assets for this project:
+
+- **3D Piggy Bank Model**: ["Piggy Bank"](https://sketchfab.com/3d-models/piggy-bank-4d5bf8d42f2d4c3493dc13a168944d64) by Sketchfab users, used as the main visual element for savings.
+- **Fonts**: 
+  - *Ubuntu Mono*: Licensed under the [Ubuntu Font License](https://ubuntu.com/legal/font-licence).
+  - *Pixel Font*: Used for our retro/app aesthetic.
+
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
