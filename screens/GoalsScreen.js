@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Modal,
 import { useData } from '../context/DataContext';
 import * as Animatable from 'react-native-animatable';
 import { useIsFocused } from '@react-navigation/native';
-import CoinJar from '../components/CoinJar';
+
 import PiggyBank from '../components/PiggyBank';
 
 export default function GoalsScreen() {
