@@ -1,15 +1,14 @@
 import React, { useMemo, useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions, Animated, TouchableWithoutFeedback, TouchableOpacity, Modal, TextInput, Platform, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Dimensions, Animated, TouchableWithoutFeedback, TouchableOpacity, Modal, TextInput, Platform, Alert, Linking } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { PieChart, LineChart } from 'react-native-chart-kit';
 import { useData } from '../context/DataContext';
 import BongoCat from '../components/BongoCat';
 import * as Animatable from 'react-native-animatable';
 import { useIsFocused } from '@react-navigation/native';
+import { getBudgetColour, computeInsights, getTimeOfDay } from '../utils/dataLogic';
 
-import { CATEGORIES, CATEGORY_COLORS_ARRAY } from '../constants/categories';
-
-const COLORS = CATEGORY_COLORS_ARRAY;
+import { CATEGORY_COLORS_ARRAY } from '../constants/categories';
 
 const TapRupee = ({ x, y, id, onComplete }) => {
   const [translateY] = useState(new Animated.Value(0));
@@ -50,8 +49,8 @@ const TapRupee = ({ x, y, id, onComplete }) => {
   );
 };
 
-export default function DashboardScreen() {
-  const { expenses, savings, balance, updateExpense, deleteExpense } = useData();
+export default function DashboardScreen({ navigation }) {
+  const { expenses, savings, balance, updateExpense, deleteExpense, categories, addCustomCategory, getBudgetStatus, getMonthTotals, streak, notifDenied, dismissNotifBanner, userName } = useData();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
   const [tapRupees, setTapRupees] = useState([]);
@@ -66,7 +65,29 @@ export default function DashboardScreen() {
   const [editDate, setEditDate] = useState(new Date());
   const [showEditDateModal, setShowEditDateModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showAddCatModal, setShowAddCatModal] = useState(false);
+  const [newCatLabel, setNewCatLabel] = useState('');
+  const [addCatError, setAddCatError] = useState('');
   const isFocused = useIsFocused();
+
+  const currentMonthKey = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}`;
+
+  // Budget statuses for the currently viewed month (re-computed when month changes)
+  const budgetStatuses = useMemo(() => {
+    return getBudgetStatus(currentMonthKey);
+  }, [selectedMonth, selectedYear, expenses]);
+
+  // Insight card data: month-over-month comparison — Requirements: 4.1, 4.2, 4.3
+  const insightEntries = useMemo(() => {
+    const currentMonth = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}`;
+    const prevDate = new Date(selectedYear, selectedMonth - 1, 1);
+    const prevMonth = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
+    const current = getMonthTotals(currentMonth);
+    const previous = getMonthTotals(prevMonth);
+    const bothEmpty = Object.keys(current).length === 0 && Object.keys(previous).length === 0;
+    if (bothEmpty) return null;
+    return computeInsights(current, previous);
+  }, [selectedMonth, selectedYear, expenses]);
 
   const isCurrentMonth = selectedYear === new Date().getFullYear() && selectedMonth === new Date().getMonth();
 
@@ -210,19 +231,31 @@ export default function DashboardScreen() {
     );
   };
 
+  const handleAddCategory = () => {
+    const result = addCustomCategory(newCatLabel);
+    if (result.success) {
+      setEditCategory(newCatLabel.trim());
+      setNewCatLabel('');
+      setAddCatError('');
+      setShowAddCatModal(false);
+    } else {
+      setAddCatError(result.error);
+    }
+  };
+
   const categoryData = useMemo(() => {
     const data = {};
     monthlyExpenses.forEach(exp => {
       data[exp.category] = (data[exp.category] || 0) + exp.amount;
     });
-    return CATEGORIES.map((cat, idx) => ({
-      name: cat,
-      amount: data[cat] || 0,
-      color: COLORS[idx],
+    return categories.map((cat, idx) => ({
+      name: cat.label,
+      amount: data[cat.label] || 0,
+      color: CATEGORY_COLORS_ARRAY[idx] || '#444444',
       legendFontColor: '#ffffff',
       legendFontSize: 10,
     })).filter(item => item.amount > 0);
-  }, [monthlyExpenses]);
+  }, [monthlyExpenses, categories]);
 
   // Full month spending data (for previous months)
   const monthSpendingData = useMemo(() => {
@@ -272,6 +305,35 @@ export default function DashboardScreen() {
           ))}
           
           <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+          {/* Notification denied banner — Requirements: 5.3 */}
+          {notifDenied && (
+            <Animatable.View animation="fadeInDown" style={styles.notifBanner}>
+              <Text style={styles.notifBannerText}>Enable notifications to get daily reminders</Text>
+              <View style={styles.notifBannerActions}>
+                <TouchableOpacity
+                  style={styles.notifBannerButton}
+                  onPress={() => Linking.openSettings()}
+                >
+                  <Text style={styles.notifBannerButtonText}>SETTINGS</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.notifBannerDismiss}
+                  onPress={dismissNotifBanner}
+                >
+                  <Text style={styles.notifBannerDismissText}>✕</Text>
+                </TouchableOpacity>
+              </View>
+            </Animatable.View>
+          )}
+          {/* Month Navigation */}
+          {/* Personalised greeting — Requirements: 8.1, 8.2, 8.3 */}
+          {!!userName && (
+            <Animatable.View key={`greeting-${animKey}`} animation="fadeInDown" delay={50} style={styles.greetingContainer}>
+              <Text style={styles.greetingText}>
+                Hello, {userName}! Good {getTimeOfDay(new Date().getHours())}
+              </Text>
+            </Animatable.View>
+          )}
           {/* Month Navigation */}
           <Animatable.View key={`month-${animKey}`} animation="fadeInDown" delay={100} style={styles.monthNav}>
             <TouchableOpacity onPress={goToPreviousMonth} style={styles.navButton}>
@@ -294,9 +356,16 @@ export default function DashboardScreen() {
 
           {/* Balance box - only show for current month */}
           {isCurrentMonth && (
-            <Animatable.View key={`balance-${animKey}`} animation="fadeInUp" delay={200} style={styles.box}>
-              <Text style={styles.title}>BALANCE.</Text>
-              <Text style={styles.amount}>₹{balance.toFixed(2)}</Text>
+            <Animatable.View key={`balance-${animKey}`} animation="fadeInUp" delay={200} style={styles.balanceRow}>
+              <View style={[styles.box, styles.balanceBox]}>
+                <Text style={styles.title}>BALANCE.</Text>
+                <Text style={styles.amount}>₹{balance.toFixed(2)}</Text>
+              </View>
+              {streak > 0 && (
+                <View style={styles.streakPill}>
+                  <Text style={styles.streakText}>🔥 {streak} day streak</Text>
+                </View>
+              )}
             </Animatable.View>
           )}
 
@@ -308,6 +377,54 @@ export default function DashboardScreen() {
         <Animatable.View key={`saved-${animKey}`} animation="fadeInUp" delay={isCurrentMonth ? 500 : 300} style={styles.boxGreen}>
             <Text style={styles.title}>SAVED THIS MONTH.</Text>
             <Text style={styles.amountGreen}>₹{totalSaved.toFixed(2)}</Text>
+        </Animatable.View>
+
+        {/* Insight card — month-over-month comparison. Requirements: 4.1–4.5 */}
+        <Animatable.View key={`insight-${animKey}`} animation="fadeInUp" delay={isCurrentMonth ? 550 : 250} style={styles.box}>
+          <Text style={styles.title}>MONTH OVER MONTH.</Text>
+          {insightEntries === null ? (
+            <Text style={styles.emptyText}>Not enough data yet — keep logging!</Text>
+          ) : (
+            <>
+              {/* Primary insight — largest absolute change */}
+              {(() => {
+                const primary = insightEntries[0];
+                const isIncrease = primary.delta > 0;
+                const tintColor = isIncrease ? '#ff6b6b' : '#4ade80';
+                const arrow = isIncrease ? '▲' : '▼';
+                const pctStr = isFinite(primary.pct)
+                  ? `${Math.abs(primary.pct).toFixed(0)}%`
+                  : 'new';
+                return (
+                  <View style={styles.insightPrimary}>
+                    <Text style={[styles.insightPrimaryText, { color: tintColor }]}>
+                      {arrow} {primary.category}: ₹{Math.abs(primary.delta).toFixed(0)} ({pctStr})
+                    </Text>
+                  </View>
+                );
+              })()}
+
+              {/* 2-column list of all category changes */}
+              <View style={styles.insightGrid}>
+                {insightEntries.map((entry) => {
+                  const isIncrease = entry.delta > 0;
+                  const colour = isIncrease ? '#ff6b6b' : '#4ade80';
+                  const arrow = isIncrease ? '▲' : entry.delta < 0 ? '▼' : '–';
+                  const pctStr = isFinite(entry.pct)
+                    ? `${Math.abs(entry.pct).toFixed(0)}%`
+                    : 'new';
+                  return (
+                    <View key={entry.category} style={styles.insightCell}>
+                      <Text style={styles.insightCatText} numberOfLines={1}>{entry.category}</Text>
+                      <Text style={[styles.insightChangeText, { color: colour }]}>
+                        {arrow} {pctStr}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+            </>
+          )}
         </Animatable.View>
 
         {/* Last 7 days - only for current month */}
@@ -403,6 +520,40 @@ export default function DashboardScreen() {
             />
           </Animatable.View>
         )}
+
+        {/* Budget progress bars */}
+        <Animatable.View key={`budget-${animKey}`} animation="fadeInUp" delay={isCurrentMonth ? 900 : 550} style={styles.box}>
+          <View style={styles.budgetHeader}>
+            <Text style={styles.title}>MONTHLY BUDGETS.</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Budget')} style={styles.budgetLink}>
+              <Text style={styles.budgetLinkText}>SET →</Text>
+            </TouchableOpacity>
+          </View>
+          {budgetStatuses.length === 0 ? (
+            <TouchableOpacity onPress={() => navigation.navigate('Budget')}>
+              <Text style={styles.emptyText}>No budgets set — tap to set up budgets</Text>
+            </TouchableOpacity>
+          ) : (
+            budgetStatuses.map((status) => {
+              const colour = getBudgetColour(status.percent);
+              const barColour = colour === 'red' ? '#ff6b6b' : colour === 'amber' ? '#f59e0b' : '#4ade80';
+              const fillWidth = Math.min(status.percent, 100);
+              return (
+                <View key={status.category} style={styles.budgetRow}>
+                  <View style={styles.budgetLabelRow}>
+                    <Text style={styles.budgetCategoryText}>{status.category}</Text>
+                    <Text style={[styles.budgetAmountText, { color: barColour }]}>
+                      ₹{status.spent.toFixed(0)} / ₹{status.limit.toFixed(0)}
+                    </Text>
+                  </View>
+                  <View style={styles.progressTrack}>
+                    <View style={[styles.progressFill, { width: `${fillWidth}%`, backgroundColor: barColour }]} />
+                  </View>
+                </View>
+              );
+            })
+          )}
+        </Animatable.View>
 
         <Animatable.View key={`recent-${animKey}`} animation="fadeInUp" delay={isCurrentMonth ? 1000 : 600} style={styles.boxGray}>
           <Text style={styles.title}>{isCurrentMonth ? 'RECENT EXPENSES.' : 'TRANSACTIONS.'}</Text>
@@ -526,28 +677,65 @@ export default function DashboardScreen() {
           <View style={styles.modalOverlay}>
             <Animatable.View animation="zoomIn" duration={300} style={styles.modalBox}>
               <Text style={styles.modalTitle}>SELECT CATEGORY.</Text>
-              {CATEGORIES.map((cat, idx) => (
+              {categories.map((cat, idx) => (
                 <Animatable.View
-                  key={cat}
+                  key={cat.id}
                   animation="fadeInRight"
                   delay={idx * 50}
                 >
                   <TouchableOpacity
                     style={styles.categoryItem}
                     onPress={() => {
-                      setEditCategory(cat);
+                      setEditCategory(cat.label);
                       setShowCategoryModal(false);
                     }}
                   >
-                    <Text style={styles.categoryText}>{cat}</Text>
+                    <Text style={styles.categoryText}>{cat.label}</Text>
                   </TouchableOpacity>
                 </Animatable.View>
               ))}
+              <Animatable.View animation="fadeInRight" delay={categories.length * 50}>
+                <TouchableOpacity
+                  style={[styles.categoryItem, styles.addCategoryItem]}
+                  onPress={() => { setShowCategoryModal(false); setShowAddCatModal(true); }}
+                >
+                  <Text style={styles.addCategoryText}>+ Add category</Text>
+                </TouchableOpacity>
+              </Animatable.View>
               <TouchableOpacity 
                 style={styles.closeButton}
                 onPress={() => setShowCategoryModal(false)}
               >
                 <Text style={styles.buttonText}>CLOSE</Text>
+              </TouchableOpacity>
+            </Animatable.View>
+          </View>
+        </Modal>
+
+        {/* Add Category Modal */}
+        <Modal
+          visible={showAddCatModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowAddCatModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <Animatable.View animation="zoomIn" duration={300} style={styles.modalBox}>
+              <Text style={styles.modalTitle}>ADD CATEGORY.</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Category name"
+                placeholderTextColor="#444444"
+                value={newCatLabel}
+                onChangeText={(v) => { setNewCatLabel(v); setAddCatError(''); }}
+                autoFocus
+              />
+              {addCatError !== '' && <Text style={styles.errorText}>{addCatError}</Text>}
+              <TouchableOpacity style={styles.button} onPress={handleAddCategory}>
+                <Text style={styles.buttonText}>ADD</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.closeButton} onPress={() => { setShowAddCatModal(false); setNewCatLabel(''); setAddCatError(''); }}>
+                <Text style={styles.buttonText}>CANCEL</Text>
               </TouchableOpacity>
             </Animatable.View>
           </View>
@@ -588,7 +776,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#333333',
     padding: 20,
-    marginBottom: 16,
+    marginBottom: 40,
     backgroundColor: '#0a0a0a',
   },
   boxToggle: {
@@ -788,6 +976,21 @@ const styles = StyleSheet.create({
     fontFamily: 'UbuntuMono',
     fontSize: 13,
   },
+  addCategoryItem: {
+    borderBottomWidth: 0,
+    marginTop: 4,
+  },
+  addCategoryText: {
+    color: '#7eb8ff',
+    fontFamily: 'UbuntuMono',
+    fontSize: 13,
+  },
+  errorText: {
+    color: '#ff6b6b',
+    fontFamily: 'UbuntuMono',
+    fontSize: 11,
+    marginBottom: 10,
+  },
   emptyText: {
     color: '#666666',
     fontFamily: 'UbuntuMono',
@@ -799,5 +1002,153 @@ const styles = StyleSheet.create({
     color: '#7eb8ff',
     fontSize: 40,
     fontWeight: 'bold',
+  },
+  budgetHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  budgetLink: {
+    padding: 4,
+  },
+  budgetLinkText: {
+    color: '#7eb8ff',
+    fontFamily: 'PixelFont',
+    fontSize: 8,
+    letterSpacing: 1,
+  },
+  budgetRow: {
+    marginBottom: 12,
+  },
+  budgetLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  budgetCategoryText: {
+    color: '#ffffff',
+    fontFamily: 'UbuntuMono',
+    fontSize: 11,
+  },
+  budgetAmountText: {
+    fontFamily: 'UbuntuMono',
+    fontSize: 11,
+  },
+  progressTrack: {
+    height: 6,
+    backgroundColor: '#1a1a1a',
+    borderWidth: 1,
+    borderColor: '#333333',
+  },
+  progressFill: {
+    height: '100%',
+  },
+  insightPrimary: {
+    marginBottom: 12,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1a1a1a',
+  },
+  insightPrimaryText: {
+    fontFamily: 'PixelFont',
+    fontSize: 10,
+    letterSpacing: 1,
+  },
+  insightGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  insightCell: {
+    width: '50%',
+    paddingVertical: 4,
+    paddingRight: 8,
+  },
+  insightCatText: {
+    color: '#aaaaaa',
+    fontFamily: 'UbuntuMono',
+    fontSize: 10,
+  },
+  insightChangeText: {
+    fontFamily: 'UbuntuMono',
+    fontSize: 10,
+  },
+  balanceRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+    gap: 8,
+  },
+  balanceBox: {
+    flex: 1,
+    marginBottom: 0,
+  },
+  streakPill: {
+    borderWidth: 1,
+    borderColor: '#f97316',
+    backgroundColor: '#0a0a0a',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  streakText: {
+    color: '#f97316',
+    fontFamily: 'PixelFont',
+    fontSize: 9,
+    letterSpacing: 1,
+  },
+  notifBanner: {
+    borderWidth: 1,
+    borderColor: '#f59e0b',
+    backgroundColor: '#1a1000',
+    padding: 12,
+    marginBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  notifBannerText: {
+    color: '#f59e0b',
+    fontFamily: 'UbuntuMono',
+    fontSize: 11,
+    flex: 1,
+    marginRight: 8,
+  },
+  notifBannerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  notifBannerButton: {
+    borderWidth: 1,
+    borderColor: '#f59e0b',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  notifBannerButtonText: {
+    color: '#f59e0b',
+    fontFamily: 'PixelFont',
+    fontSize: 8,
+    letterSpacing: 1,
+  },
+  notifBannerDismiss: {
+    padding: 4,
+  },
+  notifBannerDismissText: {
+    color: '#f59e0b',
+    fontFamily: 'UbuntuMono',
+    fontSize: 14,
+  },
+  greetingContainer: {
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    marginBottom: 4,
+  },
+  greetingText: {
+    color: '#ffffff',
+    fontFamily: 'PixelFont',
+    fontSize: 11,
+    letterSpacing: 1,
   },
 });

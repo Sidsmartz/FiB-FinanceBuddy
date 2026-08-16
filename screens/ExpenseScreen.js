@@ -7,16 +7,18 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useData } from '../context/DataContext';
 import * as Animatable from 'react-native-animatable';
 import { useIsFocused } from '@react-navigation/native';
-import { CATEGORIES } from '../constants/categories';
 import { validateAmount, sanitizeTitle, isNonEmptyTitle } from '../utils/validation';
 
 // ─── Quick-Log Section ────────────────────────────────────────────────────────
 
 function QuickLogSection({ onSuccess }) {
-  const { addExpense } = useData();
+  const { addExpense, categories, addCustomCategory } = useData();
   const [amount, setAmount] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [error, setError] = useState('');
+  const [showAddCatModal, setShowAddCatModal] = useState(false);
+  const [newCatLabel, setNewCatLabel] = useState('');
+  const [addCatError, setAddCatError] = useState('');
 
   const canLog = validateAmount(amount) && selectedCategory !== '';
 
@@ -47,6 +49,18 @@ function QuickLogSection({ onSuccess }) {
     if (error) setError('');
   };
 
+  const handleAddCategory = () => {
+    const result = addCustomCategory(newCatLabel);
+    if (result.success) {
+      setSelectedCategory(newCatLabel.trim());
+      setNewCatLabel('');
+      setAddCatError('');
+      setShowAddCatModal(false);
+    } else {
+      setAddCatError(result.error);
+    }
+  };
+
   return (
     <View style={styles.quickBox}>
       <Text style={styles.sectionTitle}>QUICK LOG.</Text>
@@ -63,20 +77,26 @@ function QuickLogSection({ onSuccess }) {
 
       {/* 2-column category grid */}
       <View style={styles.catGrid}>
-        {CATEGORIES.map((cat) => (
+        {categories.map((cat) => (
           <TouchableOpacity
-            key={cat}
-            style={[styles.catChip, selectedCategory === cat && styles.catChipActive]}
+            key={cat.id}
+            style={[styles.catChip, selectedCategory === cat.label && styles.catChipActive]}
             onPress={() => {
-              setSelectedCategory(cat);
+              setSelectedCategory(cat.label);
               if (error) setError('');
             }}
           >
-            <Text style={[styles.catChipText, selectedCategory === cat && styles.catChipTextActive]}>
-              {cat}
+            <Text style={[styles.catChipText, selectedCategory === cat.label && styles.catChipTextActive]}>
+              {cat.label}
             </Text>
           </TouchableOpacity>
         ))}
+        <TouchableOpacity
+          style={[styles.catChip, styles.catChipAdd]}
+          onPress={() => setShowAddCatModal(true)}
+        >
+          <Text style={styles.catChipAddText}>+ Add</Text>
+        </TouchableOpacity>
       </View>
 
       {error !== '' && <Text style={styles.errorText}>{error}</Text>}
@@ -88,6 +108,35 @@ function QuickLogSection({ onSuccess }) {
       >
         <Text style={[styles.buttonText, !canLog && styles.buttonTextDisabled]}>LOG</Text>
       </TouchableOpacity>
+
+      {/* Add Category Modal */}
+      <Modal
+        visible={showAddCatModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowAddCatModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <Animatable.View animation="zoomIn" duration={300} style={styles.modalBox}>
+            <Text style={styles.modalTitle}>ADD CATEGORY.</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Category name"
+              placeholderTextColor="#444444"
+              value={newCatLabel}
+              onChangeText={(v) => { setNewCatLabel(v); setAddCatError(''); }}
+              autoFocus
+            />
+            {addCatError !== '' && <Text style={styles.errorText}>{addCatError}</Text>}
+            <TouchableOpacity style={styles.button} onPress={handleAddCategory}>
+              <Text style={styles.buttonText}>ADD</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.closeButton} onPress={() => { setShowAddCatModal(false); setNewCatLabel(''); setAddCatError(''); }}>
+              <Text style={styles.buttonText}>CANCEL</Text>
+            </TouchableOpacity>
+          </Animatable.View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -95,7 +144,7 @@ function QuickLogSection({ onSuccess }) {
 // ─── Full-Log Section (collapsible) ──────────────────────────────────────────
 
 function FullLogSection({ onSuccess }) {
-  const { addExpense } = useData();
+  const { addExpense, categories, addCustomCategory } = useData();
   const [expanded, setExpanded] = useState(false);
   const [title, setTitle] = useState('');
   const [amount, setAmount] = useState('');
@@ -104,11 +153,13 @@ function FullLogSection({ onSuccess }) {
   const [date, setDate] = useState(new Date());
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showDateModal, setShowDateModal] = useState(false);
+  const [showAddCatModal, setShowAddCatModal] = useState(false);
+  const [newCatLabel, setNewCatLabel] = useState('');
+  const [addCatError, setAddCatError] = useState('');
 
   const handleAddExpense = () => {
     const cleanTitle = sanitizeTitle(title);
     if (!isNonEmptyTitle(cleanTitle) || !validateAmount(amount) || !category) {
-      // inline error — no alert()
       return;
     }
     addExpense({
@@ -120,6 +171,18 @@ function FullLogSection({ onSuccess }) {
     });
     setTitle(''); setAmount(''); setCategory(''); setSplit(''); setDate(new Date());
     onSuccess();
+  };
+
+  const handleAddCategory = () => {
+    const result = addCustomCategory(newCatLabel);
+    if (result.success) {
+      setCategory(newCatLabel.trim());
+      setNewCatLabel('');
+      setAddCatError('');
+      setShowAddCatModal(false);
+    } else {
+      setAddCatError(result.error);
+    }
   };
 
   return (
@@ -191,18 +254,55 @@ function FullLogSection({ onSuccess }) {
         <View style={styles.modalOverlay}>
           <Animatable.View animation="zoomIn" duration={300} style={styles.modalBox}>
             <Text style={styles.modalTitle}>SELECT CATEGORY.</Text>
-            {CATEGORIES.map((cat, idx) => (
-              <Animatable.View key={cat} animation="fadeInRight" delay={idx * 50}>
+            {categories.map((cat, idx) => (
+              <Animatable.View key={cat.id} animation="fadeInRight" delay={idx * 50}>
                 <TouchableOpacity
                   style={styles.categoryItem}
-                  onPress={() => { setCategory(cat); setShowCategoryModal(false); }}
+                  onPress={() => { setCategory(cat.label); setShowCategoryModal(false); }}
                 >
-                  <Text style={styles.categoryText}>{cat}</Text>
+                  <Text style={styles.categoryText}>{cat.label}</Text>
                 </TouchableOpacity>
               </Animatable.View>
             ))}
+            <Animatable.View animation="fadeInRight" delay={categories.length * 50}>
+              <TouchableOpacity
+                style={[styles.categoryItem, styles.addCategoryItem]}
+                onPress={() => { setShowCategoryModal(false); setShowAddCatModal(true); }}
+              >
+                <Text style={styles.addCategoryText}>+ Add category</Text>
+              </TouchableOpacity>
+            </Animatable.View>
             <TouchableOpacity style={styles.closeButton} onPress={() => setShowCategoryModal(false)}>
               <Text style={styles.buttonText}>CLOSE</Text>
+            </TouchableOpacity>
+          </Animatable.View>
+        </View>
+      </Modal>
+
+      {/* Add Category Modal */}
+      <Modal
+        visible={showAddCatModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowAddCatModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <Animatable.View animation="zoomIn" duration={300} style={styles.modalBox}>
+            <Text style={styles.modalTitle}>ADD CATEGORY.</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Category name"
+              placeholderTextColor="#444444"
+              value={newCatLabel}
+              onChangeText={(v) => { setNewCatLabel(v); setAddCatError(''); }}
+              autoFocus
+            />
+            {addCatError !== '' && <Text style={styles.errorText}>{addCatError}</Text>}
+            <TouchableOpacity style={styles.button} onPress={handleAddCategory}>
+              <Text style={styles.buttonText}>ADD</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.closeButton} onPress={() => { setShowAddCatModal(false); setNewCatLabel(''); setAddCatError(''); }}>
+              <Text style={styles.buttonText}>CANCEL</Text>
             </TouchableOpacity>
           </Animatable.View>
         </View>
@@ -259,7 +359,7 @@ export default function ExpenseScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 48 }}>
       {showSuccess && (
         <Animatable.View animation="bounceIn" style={styles.successBanner}>
           <Text style={styles.successText}>✔ SUCCESS!</Text>
@@ -489,6 +589,30 @@ const styles = StyleSheet.create({
   },
   catChipTextActive: {
     color: '#7eb8ff',
+  },
+  catChipAdd: {
+    width: '48%',
+    borderWidth: 1,
+    borderColor: '#444444',
+    borderStyle: 'dashed',
+    paddingVertical: 10,
+    alignItems: 'center',
+    backgroundColor: '#000000',
+  },
+  catChipAddText: {
+    color: '#666666',
+    fontFamily: 'PixelFont',
+    fontSize: 8,
+    letterSpacing: 1,
+  },
+  addCategoryItem: {
+    borderBottomWidth: 0,
+    marginTop: 4,
+  },
+  addCategoryText: {
+    color: '#7eb8ff',
+    fontFamily: 'UbuntuMono',
+    fontSize: 13,
   },
   button: {
     borderWidth: 1,

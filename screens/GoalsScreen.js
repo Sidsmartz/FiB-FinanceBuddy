@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Modal, Alert } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Modal, Alert, Linking } from 'react-native';
 import { useData } from '../context/DataContext';
 import * as Animatable from 'react-native-animatable';
 import { useIsFocused } from '@react-navigation/native';
@@ -153,6 +153,19 @@ export default function GoalsScreen() {
           </Animatable.View>
         </View>
       </Modal>
+
+      <View style={styles.supportSection}>
+        <Text style={styles.supportTitle}>FiB is free & ad-free forever 🐱</Text>
+        <TouchableOpacity
+          style={styles.chaiButton}
+          onPress={() =>
+            Linking.openURL('https://support-fib.vercel.app')
+          }
+        >
+          <Text style={styles.chaiButtonText}>🥤 Buy me a diet coke.</Text>
+        </TouchableOpacity>
+        <Text style={styles.supportSubtext}>Keeps your cat buddy fed</Text>
+      </View>
 
       <View style={styles.attributionContainer}>
         <Text style={styles.attributionText}>Piggy Bank 3D Model by Sketchfab Users</Text>
@@ -352,5 +365,39 @@ const styles = StyleSheet.create({
     color: '#333333',
     fontFamily: 'UbuntuMono',
     fontSize: 10,
+  },
+  supportSection: {
+    borderWidth: 1,
+    borderColor: '#ffffff',
+    backgroundColor: '#0a0a0a',
+    padding: 20,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  supportTitle: {
+    color: '#ffffff',
+    fontFamily: 'UbuntuMono',
+    fontSize: 13,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  chaiButton: {
+    borderWidth: 1,
+    borderColor: '#ffffff',
+    backgroundColor: '#1a1a1a',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    marginBottom: 12,
+  },
+  chaiButtonText: {
+    color: '#ffffff',
+    fontFamily: 'PixelFont',
+    fontSize: 10,
+    letterSpacing: 1,
+  },
+  supportSubtext: {
+    color: '#666666',
+    fontFamily: 'UbuntuMono',
+    fontSize: 11,
   },
 });

@@ -2,16 +2,20 @@ import './shims';
 import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { StyleSheet, Text, View } from 'react-native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Font from 'expo-font';
 import DashboardScreen from './screens/DashboardScreen';
 import ExpenseScreen from './screens/ExpenseScreen';
 import GoalsScreen from './screens/GoalsScreen';
 import TransactionsScreen from './screens/TransactionsScreen';
-import { DataProvider } from './context/DataContext';
+import BudgetScreen from './screens/BudgetScreen';
+import OnboardingScreen from './screens/OnboardingScreen';
+import { DataProvider, useData } from './context/DataContext';
 
 const Tab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator();
 
 const HeaderTitle = () => (
   <View style={{ flexDirection: 'row' }}>
@@ -23,6 +27,116 @@ const HeaderTitle = () => (
     <Text style={styles.headerTitle}>uddy</Text>
   </View>
 );
+
+// Calls checkAndUpdateStreak once on every app open (must be inside DataProvider).
+// Requirements: 5.4
+function StreakInitialiser() {
+  const { checkAndUpdateStreak } = useData();
+  useEffect(() => {
+    checkAndUpdateStreak();
+  }, []);
+  return null;
+}
+
+/**
+ * AppRoot — lives inside DataProvider so it can read onboardingComplete.
+ * Requirements: 6.1, 6.2 — gates between OnboardingScreen and main tabs.
+ */
+function AppRoot() {
+  const { onboardingComplete } = useData();
+
+  if (!onboardingComplete) {
+    return <OnboardingScreen />;
+  }
+
+  return (
+    <>
+      <StreakInitialiser />
+      <NavigationContainer>
+        <Tab.Navigator
+          screenOptions={{
+            headerStyle: styles.header,
+            headerTitleStyle: styles.headerTitle,
+            tabBarStyle: styles.tabBar,
+            tabBarActiveTintColor: '#ffffff',
+            tabBarInactiveTintColor: '#666666',
+          }}
+        >
+          <Tab.Screen
+            name="Dashboard"
+            component={DashboardStack}
+            options={{
+              headerShown: false,
+              tabBarIcon: ({ color, size }) => (
+                <Ionicons name="home" size={size} color={color} />
+              ),
+            }}
+          />
+          <Tab.Screen
+            name="Expense"
+            component={ExpenseScreen}
+            options={{
+              tabBarIcon: ({ color, size }) => (
+                <Ionicons name="wallet" size={size} color={color} />
+              ),
+            }}
+          />
+          <Tab.Screen
+            name="Goals"
+            component={GoalsScreen}
+            options={{
+              tabBarIcon: ({ color, size }) => (
+                <Ionicons name="trophy" size={size} color={color} />
+              ),
+            }}
+          />
+          <Tab.Screen
+            name="Transactions"
+            component={TransactionsScreen}
+            options={{
+              tabBarIcon: ({ color, size }) => (
+                <Ionicons name="list" size={size} color={color} />
+              ),
+            }}
+          />
+        </Tab.Navigator>
+      </NavigationContainer>
+    </>
+  );
+}
+
+// Stack navigator that wraps Dashboard + BudgetScreen
+function DashboardStack() {  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: styles.header,
+        headerTitleStyle: styles.headerTitle,
+        headerTintColor: '#ffffff',
+      }}
+    >
+      <Stack.Screen
+        name="DashboardMain"
+        component={DashboardScreen}
+        options={({ navigation }) => ({
+          headerTitle: () => <HeaderTitle />,
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Budget')}
+              style={{ paddingRight: 8 }}
+            >
+              <Ionicons name="wallet-outline" size={22} color="#ffffff" />
+            </TouchableOpacity>
+          ),
+        })}
+      />
+      <Stack.Screen
+        name="Budget"
+        component={BudgetScreen}
+        options={{ title: 'Monthly Budgets' }}
+      />
+    </Stack.Navigator>
+  );
+}
 
 export default function App() {
   const [fontsLoaded, setFontsLoaded] = useState(false);
@@ -49,55 +163,7 @@ export default function App() {
 
   return (
     <DataProvider>
-      <NavigationContainer>
-        <Tab.Navigator
-          screenOptions={{
-            headerStyle: styles.header,
-            headerTitleStyle: styles.headerTitle,
-            tabBarStyle: styles.tabBar,
-            tabBarActiveTintColor: '#ffffff',
-            tabBarInactiveTintColor: '#666666',
-          }}
-        >
-          <Tab.Screen 
-            name="Dashboard" 
-            component={DashboardScreen}
-            options={{
-              headerTitle: () => <HeaderTitle />,
-              tabBarIcon: ({ color, size }) => (
-                <Ionicons name="home" size={size} color={color} />
-              ),
-            }}
-          />
-          <Tab.Screen 
-            name="Expense" 
-            component={ExpenseScreen}
-            options={{
-              tabBarIcon: ({ color, size }) => (
-                <Ionicons name="wallet" size={size} color={color} />
-              ),
-            }}
-          />
-          <Tab.Screen 
-            name="Goals" 
-            component={GoalsScreen}
-            options={{
-              tabBarIcon: ({ color, size }) => (
-                <Ionicons name="trophy" size={size} color={color} />
-              ),
-            }}
-          />
-          <Tab.Screen 
-            name="Transactions" 
-            component={TransactionsScreen}
-            options={{
-              tabBarIcon: ({ color, size }) => (
-                <Ionicons name="list" size={size} color={color} />
-              ),
-            }}
-          />
-        </Tab.Navigator>
-      </NavigationContainer>
+      <AppRoot />
     </DataProvider>
   );
 }
