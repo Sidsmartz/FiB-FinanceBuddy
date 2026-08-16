@@ -38,7 +38,6 @@ export default function FiBWidgetPreview({ balance = 0, hasError = false }) {
         style={{
           color: '#7eb8ff',
           fontSize: 10,
-          fontFamily: 'PixelFont',
           letterSpacing: 2,
           marginBottom: 4,
         }}
@@ -50,7 +49,6 @@ export default function FiBWidgetPreview({ balance = 0, hasError = false }) {
         style={{
           color: '#ffffff',
           fontSize: 20,
-          fontFamily: 'PixelFont',
           marginBottom: 12,
         }}
       />
@@ -72,7 +70,6 @@ export default function FiBWidgetPreview({ balance = 0, hasError = false }) {
           style={{
             color: '#7eb8ff',
             fontSize: 8,
-            fontFamily: 'PixelFont',
             letterSpacing: 1,
           }}
         />

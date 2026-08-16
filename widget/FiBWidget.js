@@ -3,9 +3,9 @@
  * Handles WIDGET_ADDED, WIDGET_UPDATE, and the LOG_EXPENSE click action.
  * Requirements: 2.1, 2.3, 2.4, 2.5
  */
-import { registerWidgetTaskHandler } from 'react-native-android-widget';
+import React from 'react';
+import { registerWidgetTaskHandler, renderWidget } from 'react-native-android-widget';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { renderWidget } from 'react-native-android-widget';
 import FiBWidgetPreview from './FiBWidgetPreview';
 
 const WIDGET_BALANCE_KEY = 'fibWidgetBalance';

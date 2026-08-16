@@ -1,8 +1,7 @@
 /**
  * QuickLogActivity — minimal overlay screen launched from the widget.
  * Shows amount input + horizontal category scroll + confirm button.
- * On confirm: writes expense to AsyncStorage and triggers widget refresh.
- * Requirements: 2.2, 2.3
+ * Writes directly to SQLite via expo-sqlite (same DB as the main app).
  */
 import React, { useState } from 'react';
 import {
@@ -10,13 +9,39 @@ import {
   ScrollView, StyleSheet, SafeAreaView,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SQLite from 'expo-sqlite';
 import { updateWidget } from 'react-native-android-widget';
 import { CATEGORIES } from '../constants/categories';
 import { validateAmount } from '../utils/validation';
-import { validatePersistedData } from '../utils/dataLogic';
 
-const STORAGE_KEY = 'financeData';
 const WIDGET_BALANCE_KEY = 'fibWidgetBalance';
+
+async function writeExpenseToSQLite(amount, category) {
+  try {
+    const db = SQLite.openDatabaseSync('fib.db');
+    const id = Date.now().toString();
+    const date = new Date().toISOString();
+
+    db.runSync(
+      `INSERT INTO expenses (id, title, amount, category, date, split, split_with, is_recurring)
+       VALUES (?, ?, ?, ?, ?, 0, NULL, 0)`,
+      [id, `${category} expense`, amount, category, date],
+    );
+
+    // Update balance in meta
+    const balRow = db.getFirstSync('SELECT value FROM meta WHERE key = ?', ['balance']);
+    const currentBalance = balRow ? parseFloat(balRow.value) : 0;
+    const newBalance = currentBalance - amount;
+    db.runSync('INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)', ['balance', String(newBalance)]);
+
+    // Keep widget balance key in sync
+    await AsyncStorage.setItem(WIDGET_BALANCE_KEY, JSON.stringify(newBalance));
+    return true;
+  } catch (err) {
+    console.error('[FiB] QuickLogActivity SQLite error:', err);
+    return false;
+  }
+}
 
 export default function QuickLogActivity({ onDone }) {
   const [amount, setAmount] = useState('');
@@ -33,35 +58,9 @@ export default function QuickLogActivity({ onDone }) {
     }
     setError('');
 
-    try {
-      // Read current data
-      const raw = await AsyncStorage.getItem(STORAGE_KEY);
-      const parsed = raw ? JSON.parse(raw) : {};
-      const state = validatePersistedData(parsed);
-
-      // Build new expense
-      const newExpense = {
-        id: Date.now().toString(),
-        title: `${category} expense`,
-        amount: parseFloat(amount),
-        category,
-        split: 0,
-        date: new Date().toISOString(),
-      };
-
-      // Update state
-      const newExpenses = [...state.expenses, newExpense];
-      const newBalance = state.balance - newExpense.amount;
-      const newState = { ...state, expenses: newExpenses, balance: newBalance };
-
-      // Persist
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newState));
-      await AsyncStorage.setItem(WIDGET_BALANCE_KEY, JSON.stringify(newBalance));
-
-      // Refresh widget
-      await updateWidget({ widgetName: 'FiBWidget' });
-    } catch (err) {
-      console.error('[FiB] QuickLogActivity error:', err);
+    const success = await writeExpenseToSQLite(parseFloat(amount), category);
+    if (success) {
+      try { await updateWidget({ widgetName: 'FiBWidget' }); } catch (_) {}
     }
 
     setDone(true);
@@ -91,7 +90,6 @@ export default function QuickLogActivity({ onDone }) {
           autoFocus
         />
 
-        {/* Horizontal category scroll */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catRow}>
           {CATEGORIES.map(cat => (
             <TouchableOpacity

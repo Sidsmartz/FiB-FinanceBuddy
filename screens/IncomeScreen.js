@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useData } from '../context/DataContext';
 import * as Animatable from 'react-native-animatable';
 import { useIsFocused } from '@react-navigation/native';
 
 export default function IncomeScreen() {
-  const { incomeFlows, addIncomeFlow, updateIncomeFlow } = useData();
+  const { incomeFlows, addIncomeFlow, updateIncomeFlow, deleteIncomeFlow } = useData();
   const [source, setSource] = useState('');
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState('');
@@ -100,7 +100,21 @@ export default function IncomeScreen() {
         <Text style={styles.title}>INCOME FLOWS.</Text>
         {incomeFlows.map(flow => (
           <View key={flow.id} style={styles.flowItem}>
-            <Text style={styles.flowSource}>{flow.source}</Text>
+            <View style={styles.flowHeader}>
+              <Text style={styles.flowSource}>{flow.source}</Text>
+              <TouchableOpacity
+                onPress={() => Alert.alert(
+                  'Delete Income',
+                  `Delete "${flow.source}"?`,
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Delete', style: 'destructive', onPress: () => deleteIncomeFlow(flow.id) },
+                  ]
+                )}
+              >
+                <Text style={styles.deleteText}>×</Text>
+              </TouchableOpacity>
+            </View>
             <Text style={styles.flowAmount}>₹{flow.amount.toFixed(2)}</Text>
             <Text style={styles.flowDate}>{flow.expectedDate}</Text>
             
@@ -216,11 +230,22 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#1a1a1a',
   },
+  flowHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
   flowSource: {
     color: '#ffffff',
     fontFamily: 'PixelFont',
     fontSize: 12,
-    marginBottom: 8,
+  },
+  deleteText: {
+    color: '#ff6b6b',
+    fontFamily: 'PixelFont',
+    fontSize: 20,
+    paddingHorizontal: 4,
   },
   flowAmount: {
     color: '#7eb8ff',

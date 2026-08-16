@@ -55,10 +55,11 @@ export default function OnboardingScreen() {
   const [showPrivacy, setShowPrivacy] = useState(false);
 
   // Step 1 — Income
-  const [hasIncome, setHasIncome] = useState(null); // null = not answered yet
+  const [hasIncome, setHasIncome] = useState(null);
   const [incomeAmount, setIncomeAmount] = useState('');
   const [frequency, setFrequency] = useState('Monthly');
   const [autoAdd, setAutoAdd] = useState(false);
+  const [dueDay, setDueDay] = useState(1); // day of month for auto-add
 
   // Step 2 — Budget
   const [budgetInputs, setBudgetInputs] = useState({});
@@ -78,12 +79,30 @@ export default function OnboardingScreen() {
     if (hasIncome === true) {
       const amount = parseFloat(incomeAmount);
       if (incomeAmount && !isNaN(amount) && amount > 0 && frequency !== 'Irregular') {
+        // Build next expected date from dueDay
+        const now = new Date();
+        const nextDate = new Date(now.getFullYear(), now.getMonth(), dueDay);
+        if (nextDate <= now) nextDate.setMonth(nextDate.getMonth() + 1);
+
         addIncomeFlow({
           source: 'Monthly Income',
           amount,
           frequency,
           recurring: true,
-          autoAdd: frequency !== 'Irregular' ? autoAdd : false,
+          autoAdd: autoAdd,
+          expectedDate: nextDate.toISOString(),
+          completed: false,
+          savingsAlloc: 0,
+          spendAlloc: 0,
+        });
+      } else if (frequency === 'Irregular') {
+        addIncomeFlow({
+          source: 'Income',
+          amount: parseFloat(incomeAmount) || 0,
+          frequency: 'Irregular',
+          recurring: false,
+          autoAdd: false,
+          expectedDate: null,
           completed: false,
           savingsAlloc: 0,
           spendAlloc: 0,
@@ -235,6 +254,26 @@ export default function OnboardingScreen() {
           thumbColor={autoAdd && !incomeFieldsDisabled ? '#ffffff' : '#444444'}
         />
       </View>
+
+      {/* Due day picker — only show when auto-add is on */}
+      {autoAdd && !incomeFieldsDisabled && frequency !== 'Irregular' && (
+        <View style={styles.dueDaySection}>
+          <Text style={styles.label}>Which day of the month?</Text>
+          <View style={styles.dueDayGrid}>
+            {[1,5,7,10,14,15,20,25,28,30].map((day) => (
+              <TouchableOpacity
+                key={day}
+                style={[styles.chip, dueDay === day && styles.chipSelected]}
+                onPress={() => setDueDay(day)}
+              >
+                <Text style={[styles.chipText, dueDay === day && styles.chipTextSelected]}>
+                  {day}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      )}
 
       <TouchableOpacity style={styles.primaryButton} onPress={handleIncomeNext}>
         <Text style={styles.primaryButtonText}>Next →</Text>
@@ -435,8 +474,17 @@ const styles = StyleSheet.create({
     color: '#333333',
     backgroundColor: '#050505',
   },
+  dueDaySection: {
+    width: '100%',
+    marginBottom: 24,
+  },
+  dueDayGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
   skipLink: {
-    marginTop: 20, // increased from 16
+    marginTop: 20,
   },
   skipLinkText: {
     color: '#666666',
