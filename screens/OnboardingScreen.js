@@ -63,6 +63,9 @@ export default function OnboardingScreen() {
 
   // Step 2 — Budget
   const [budgetInputs, setBudgetInputs] = useState({});
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [budgetAmountInput, setBudgetAmountInput] = useState('');
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
 
   // ─── Step 0 handlers ─────────────────────────────────────────────────────
   const handleGetStarted = () => {
@@ -115,7 +118,18 @@ export default function OnboardingScreen() {
   const handleSkipIncome = () => setStep(2);
 
   // ─── Step 2 handlers ─────────────────────────────────────────────────────
+  const handleAddBudget = () => {
+    if (!selectedCategory) return;
+    const limit = parseFloat(budgetAmountInput);
+    if (budgetAmountInput && !isNaN(limit) && limit > 0) {
+      setBudgetInputs((prev) => ({ ...prev, [selectedCategory]: budgetAmountInput }));
+    }
+    setSelectedCategory(null);
+    setBudgetAmountInput('');
+  };
+
   const handleDone = () => {
+    // Persist any amounts that were added via the dropdown
     Object.entries(budgetInputs).forEach(([category, val]) => {
       const limit = parseFloat(val);
       if (val && !isNaN(limit) && limit > 0) {
@@ -260,7 +274,7 @@ export default function OnboardingScreen() {
         <View style={styles.dueDaySection}>
           <Text style={styles.label}>Which day of the month?</Text>
           <View style={styles.dueDayGrid}>
-            {[1,5,7,10,14,15,20,25,28,30].map((day) => (
+            {[1, 5, 7, 10, 14, 15, 20, 25, 28, 30].map((day) => (
               <TouchableOpacity
                 key={day}
                 style={[styles.chip, dueDay === day && styles.chipSelected]}
@@ -290,26 +304,112 @@ export default function OnboardingScreen() {
       <Text style={styles.stepTitle}>BUDGET SETUP.</Text>
       <Text style={styles.stepSubtitle}>Set monthly spending limits per category (optional).</Text>
 
-      {/* Use plain View rows instead of FlatList to avoid nested VirtualizedList warning */}
-      {categories.map((item) => (
-        <View key={item.id} style={styles.budgetRow}>
-          <Text style={styles.budgetLabel}>{item.label}</Text>
-          <TextInput
-            style={styles.budgetInput}
-            placeholder="₹ limit"
-            placeholderTextColor="#444444"
-            value={budgetInputs[item.label] || ''}
-            onChangeText={(val) =>
-              setBudgetInputs((prev) => ({ ...prev, [item.label]: val }))
-            }
-            keyboardType="numeric"
-          />
+      {/* Category dropdown */}
+      <Text style={styles.label}>Category</Text>
+      <TouchableOpacity
+        style={styles.dropdown}
+        onPress={() => setShowCategoryDropdown(true)}
+      >
+        <Text style={selectedCategory ? styles.dropdownValueText : styles.dropdownPlaceholderText}>
+          {selectedCategory || 'Select a category…'}
+        </Text>
+        <Text style={styles.dropdownChevron}>▾</Text>
+      </TouchableOpacity>
+
+      {/* Amount input — shown once a category is selected */}
+      {selectedCategory && (
+        <Animatable.View animation="fadeIn" duration={300} style={{ width: '100%' }}>
+          <Text style={[styles.label, { marginTop: 16 }]}>Monthly limit (₹)</Text>
+          <View style={styles.budgetInputRow}>
+            <TextInput
+              style={[styles.input, { flex: 1, marginBottom: 0 }]}
+              placeholder="e.g. 5000"
+              placeholderTextColor="#444444"
+              value={budgetAmountInput}
+              onChangeText={setBudgetAmountInput}
+              keyboardType="numeric"
+              autoFocus
+            />
+            <TouchableOpacity style={styles.addBudgetButton} onPress={handleAddBudget}>
+              <Text style={styles.addBudgetButtonText}>Add</Text>
+            </TouchableOpacity>
+          </View>
+        </Animatable.View>
+      )}
+
+      {/* Summary of set budgets */}
+      {Object.keys(budgetInputs).length > 0 && (
+        <View style={styles.budgetSummary}>
+          {Object.entries(budgetInputs).map(([cat, val]) => (
+            <View key={cat} style={styles.budgetSummaryRow}>
+              <Text style={styles.budgetSummaryLabel}>{cat}</Text>
+              <Text style={styles.budgetSummaryValue}>₹{val}</Text>
+              <TouchableOpacity
+                onPress={() => setBudgetInputs((prev) => {
+                  const next = { ...prev };
+                  delete next[cat];
+                  return next;
+                })}
+              >
+                <Text style={styles.budgetSummaryRemove}>✕</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
         </View>
-      ))}
+      )}
 
       <TouchableOpacity style={[styles.primaryButton, styles.doneButton]} onPress={handleDone}>
         <Text style={styles.primaryButtonText}>Done ✓</Text>
       </TouchableOpacity>
+
+      <TouchableOpacity style={styles.skipLink} onPress={handleDone}>
+        <Text style={styles.skipLinkText}>I'll do this later</Text>
+      </TouchableOpacity>
+
+      {/* Category picker modal */}
+      <Modal
+        visible={showCategoryDropdown}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowCategoryDropdown(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowCategoryDropdown(false)}
+        >
+          <Animatable.View animation="slideInUp" duration={250} style={styles.dropdownModal}>
+            <Text style={styles.dropdownModalTitle}>SELECT CATEGORY</Text>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {categories.map((item) => (
+                <TouchableOpacity
+                  key={item.id}
+                  style={[
+                    styles.dropdownOption,
+                    selectedCategory === item.label && styles.dropdownOptionSelected,
+                    budgetInputs[item.label] && styles.dropdownOptionSet,
+                  ]}
+                  onPress={() => {
+                    setSelectedCategory(item.label);
+                    setBudgetAmountInput(budgetInputs[item.label] || '');
+                    setShowCategoryDropdown(false);
+                  }}
+                >
+                  <Text style={[
+                    styles.dropdownOptionText,
+                    selectedCategory === item.label && styles.dropdownOptionTextSelected,
+                  ]}>
+                    {item.label}
+                  </Text>
+                  {budgetInputs[item.label] ? (
+                    <Text style={styles.dropdownOptionBadge}>₹{budgetInputs[item.label]}</Text>
+                  ) : null}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </Animatable.View>
+        </TouchableOpacity>
+      </Modal>
     </Animatable.View>
   );
 
@@ -494,37 +594,140 @@ const styles = StyleSheet.create({
   },
 
   // ─── Step 2 ───────────────────────────────────────────────────────────────
-  budgetRow: {
+  dropdown: {
+    borderWidth: 1,
+    borderColor: '#333333',
+    padding: 14,
+    backgroundColor: '#0a0a0a',
+    width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: '#1a1a1a',
-    padding: 14, // increased from 12
-    marginBottom: 12, // increased from 8
-    backgroundColor: '#0a0a0a',
-    width: '100%',
+    marginBottom: 4,
   },
-  budgetLabel: {
+  dropdownPlaceholderText: {
+    color: '#444444',
+    fontFamily: 'UbuntuMono',
+    fontSize: 13,
+    flex: 1,
+  },
+  dropdownValueText: {
     color: '#ffffff',
     fontFamily: 'UbuntuMono',
     fontSize: 13,
     flex: 1,
   },
-  budgetInput: {
+  dropdownChevron: {
+    color: '#666666',
+    fontSize: 14,
+    marginLeft: 8,
+  },
+  budgetInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    width: '100%',
+    marginBottom: 8,
+  },
+  addBudgetButton: {
+    borderWidth: 1,
+    borderColor: '#4a9eff',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: '#0d1a2e',
+  },
+  addBudgetButtonText: {
+    color: '#4a9eff',
+    fontFamily: 'PixelFont',
+    fontSize: 10,
+    letterSpacing: 1,
+  },
+  budgetSummary: {
+    width: '100%',
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: '#1a1a1a',
+    backgroundColor: '#0a0a0a',
+    paddingVertical: 4,
+  },
+  budgetSummaryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#111111',
+  },
+  budgetSummaryLabel: {
+    color: '#aaaaaa',
+    fontFamily: 'UbuntuMono',
+    fontSize: 12,
+    flex: 1,
+  },
+  budgetSummaryValue: {
+    color: '#4a9eff',
+    fontFamily: 'UbuntuMono',
+    fontSize: 12,
+    marginRight: 12,
+  },
+  budgetSummaryRemove: {
+    color: '#555555',
+    fontFamily: 'UbuntuMono',
+    fontSize: 12,
+  },
+  dropdownModal: {
+    backgroundColor: '#0a0a0a',
     borderWidth: 1,
     borderColor: '#333333',
-    padding: 10, // increased from 8
+    borderTopLeftRadius: 2,
+    borderTopRightRadius: 2,
+    maxHeight: '60%',
+    padding: 16,
+    marginTop: 'auto',
+  },
+  dropdownModalTitle: {
     color: '#ffffff',
+    fontFamily: 'PixelFont',
+    fontSize: 10,
+    letterSpacing: 2,
+    marginBottom: 12,
+  },
+  dropdownOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#111111',
+  },
+  dropdownOptionSelected: {
+    backgroundColor: '#0d1a2e',
+  },
+  dropdownOptionSet: {
+    opacity: 0.75,
+  },
+  dropdownOptionText: {
+    color: '#cccccc',
     fontFamily: 'UbuntuMono',
-    backgroundColor: '#000000',
     fontSize: 13,
-    width: 100,
-    textAlign: 'right',
+    flex: 1,
+  },
+  dropdownOptionTextSelected: {
+    color: '#4a9eff',
+  },
+  dropdownOptionBadge: {
+    color: '#4a9eff',
+    fontFamily: 'UbuntuMono',
+    fontSize: 11,
+    borderWidth: 1,
+    borderColor: '#0d1a2e',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    backgroundColor: '#050d17',
   },
   doneButton: {
-    marginTop: 20, // increased from 16
-    marginBottom: 12, // increased from 8
+    marginTop: 20,
+    marginBottom: 4,
     width: '100%',
   },
 

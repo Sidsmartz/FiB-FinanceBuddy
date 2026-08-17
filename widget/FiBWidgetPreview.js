@@ -7,7 +7,6 @@ import React from 'react';
 import {
   FlexWidget,
   TextWidget,
-  TouchableWidget,
 } from 'react-native-android-widget';
 
 /**
@@ -23,7 +22,8 @@ export default function FiBWidgetPreview({ balance = 0, hasError = false }) {
   return (
     <FlexWidget
       style={{
-        flex: 1,
+        width: 'match_parent',
+        height: 'match_parent',
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
@@ -54,8 +54,9 @@ export default function FiBWidgetPreview({ balance = 0, hasError = false }) {
       />
 
       {/* Log Expense button */}
-      <TouchableWidget
-        clickAction="OPEN_QUICK_LOG"
+      <FlexWidget
+        clickAction="OPEN_URI"
+        clickActionData={{ uri: 'financebuddy://quicklog' }}
         style={{
           backgroundColor: '#1a1a1a',
           borderRadius: 4,
@@ -73,7 +74,7 @@ export default function FiBWidgetPreview({ balance = 0, hasError = false }) {
             letterSpacing: 1,
           }}
         />
-      </TouchableWidget>
+      </FlexWidget>
     </FlexWidget>
   );
 }

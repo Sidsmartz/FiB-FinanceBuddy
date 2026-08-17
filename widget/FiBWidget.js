@@ -1,19 +1,17 @@
 /**
  * Widget task handler — registered with react-native-android-widget.
- * Handles WIDGET_ADDED, WIDGET_UPDATE, and the LOG_EXPENSE click action.
- * Requirements: 2.1, 2.3, 2.4, 2.5
+ * Handles WIDGET_ADDED, WIDGET_UPDATE, WIDGET_RESIZED, and WIDGET_CLICK actions.
+ *
+ * The library's registerWidgetTaskHandler injects renderWidget as a PROP
+ * into the handler — it is NOT importable from the library.
  */
 import React from 'react';
-import { registerWidgetTaskHandler, renderWidget } from 'react-native-android-widget';
+import { registerWidgetTaskHandler } from 'react-native-android-widget';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import FiBWidgetPreview from './FiBWidgetPreview';
 
 const WIDGET_BALANCE_KEY = 'fibWidgetBalance';
 
-/**
- * Reads the widget balance from AsyncStorage.
- * Falls back to 0 on error (req 2.5) and flags hasError.
- */
 async function readWidgetBalance() {
   try {
     const raw = await AsyncStorage.getItem(WIDGET_BALANCE_KEY);
@@ -25,38 +23,25 @@ async function readWidgetBalance() {
 }
 
 /**
- * Renders the widget with the current balance.
- * Called on WIDGET_ADDED and WIDGET_UPDATE.
- */
-async function renderFiBWidget(widgetInfo) {
-  const { balance, hasError } = await readWidgetBalance();
-  await renderWidget({
-    widgetName: 'FiBWidget',
-    widgetInfo,
-    widgetProvider: () => (
-      <FiBWidgetPreview balance={balance} hasError={hasError} />
-    ),
-  });
-}
-
-/**
  * The task handler invoked by the Android widget framework.
+ * `renderWidget` is provided by the library as a prop — NOT imported.
  */
-async function widgetTaskHandler(props) {
-  const { widgetAction, widgetInfo } = props;
-
+async function widgetTaskHandler({ widgetAction, widgetInfo, renderWidget }) {
   switch (widgetAction) {
     case 'WIDGET_ADDED':
     case 'WIDGET_UPDATE':
-    case 'WIDGET_RESIZED':
-      await renderFiBWidget(widgetInfo);
+    case 'WIDGET_RESIZED': {
+      const { balance, hasError } = await readWidgetBalance();
+      renderWidget(<FiBWidgetPreview balance={balance} hasError={hasError} />);
+      break;
+    }
+
+    case 'WIDGET_CLICK':
+      // clickAction = 'OPEN_URI' is handled natively by the library.
+      // No JS work needed here.
       break;
 
-    case 'OPEN_QUICK_LOG':
-      // The TouchableWidget click action — Android will launch the activity
-      // registered under the OPEN_QUICK_LOG intent; no JS work needed here.
-      break;
-
+    case 'WIDGET_DELETED':
     default:
       break;
   }

@@ -10,7 +10,8 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SQLite from 'expo-sqlite';
-import { updateWidget } from 'react-native-android-widget';
+import { requestWidgetUpdate } from 'react-native-android-widget';
+import FiBWidgetPreview from './FiBWidgetPreview';
 import { CATEGORIES } from '../constants/categories';
 import { validateAmount } from '../utils/validation';
 
@@ -60,7 +61,14 @@ export default function QuickLogActivity({ onDone }) {
 
     const success = await writeExpenseToSQLite(parseFloat(amount), category);
     if (success) {
-      try { await updateWidget({ widgetName: 'FiBWidget' }); } catch (_) {}
+      try {
+        const raw = await AsyncStorage.getItem(WIDGET_BALANCE_KEY);
+        const newBal = raw !== null ? JSON.parse(raw) : 0;
+        await requestWidgetUpdate({
+          widgetName: 'FiBWidget',
+          renderWidget: () => <FiBWidgetPreview balance={newBal} hasError={false} />,
+        });
+      } catch (_) { }
     }
 
     setDone(true);

@@ -606,10 +606,10 @@ export const DataProvider = ({ children }) => {
       // Advance expectedDate by one period
       const next = new Date(due);
       switch (row.frequency) {
-        case 'Weekly':    next.setDate(next.getDate() + 7); break;
+        case 'Weekly': next.setDate(next.getDate() + 7); break;
         case 'Bi-weekly': next.setDate(next.getDate() + 14); break;
         case 'Monthly':
-        default:          next.setMonth(next.getMonth() + 1); break;
+        default: next.setMonth(next.getMonth() + 1); break;
       }
 
       db.runSync('UPDATE income_flows SET expected_date = ? WHERE id = ?', [next.toISOString(), row.id]);
