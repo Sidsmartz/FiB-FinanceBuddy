@@ -46,6 +46,7 @@ export const DataProvider = ({ children }) => {
       dbRef.current = db;
       await runMigrationIfNeeded(db);
       loadData(db);
+      checkAndAutoAddIncome();
       await setupNotifications(db);
     }
     init();
@@ -412,6 +413,12 @@ export const DataProvider = ({ children }) => {
     setIncomeFlows(prev => [...prev, newFlow]);
   };
 
+  const deleteIncomeFlow = (id) => {
+    const db = dbRef.current;
+    db.runSync('DELETE FROM income_flows WHERE id = ?', [id]);
+    setIncomeFlows(prev => prev.filter(f => f.id !== id));
+  };
+
   const updateIncomeFlow = (id, updates) => {
     const db = dbRef.current;
     const newFlows = incomeFlows.map(f => f.id === id ? { ...f, ...updates } : f);
@@ -557,6 +564,68 @@ export const DataProvider = ({ children }) => {
     setStreak(newCount);
   };
 
+  // ─── Auto-add income on due date ─────────────────────────────────────────
+  /**
+   * Called on every app open. Checks all income flows with autoAdd=true
+   * whose expectedDate is today or earlier. For each due flow, credits the
+   * balance and advances the expectedDate by one frequency period.
+   */
+  const checkAndAutoAddIncome = () => {
+    const db = dbRef.current;
+    if (!db) return;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const flows = db.getAllSync('SELECT * FROM income_flows WHERE auto_add = 1 AND completed = 0', []);
+
+    for (const row of flows) {
+      if (!row.expected_date) continue;
+      const due = new Date(row.expected_date);
+      due.setHours(0, 0, 0, 0);
+      if (due > today) continue;
+
+      // Read current balance + history directly from DB
+      const balanceRaw = getMeta(db, 'balance');
+      const currentBalance = balanceRaw !== null ? parseFloat(balanceRaw) : 0;
+      const historyRaw = getMeta(db, 'balance_history');
+      const currentHistory = historyRaw ? JSON.parse(historyRaw) : [];
+
+      const newBalance = currentBalance + row.amount;
+      const entry = {
+        id: Date.now().toString() + row.id,
+        title: row.source || 'Income',
+        amount: row.amount,
+        date: new Date().toISOString(),
+      };
+      const newHistory = [...currentHistory, entry];
+
+      db.runSync('INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)', ['balance', String(newBalance)]);
+      db.runSync('INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)', ['balance_history', JSON.stringify(newHistory)]);
+
+      // Advance expectedDate by one period
+      const next = new Date(due);
+      switch (row.frequency) {
+        case 'Weekly': next.setDate(next.getDate() + 7); break;
+        case 'Bi-weekly': next.setDate(next.getDate() + 14); break;
+        case 'Monthly':
+        default: next.setMonth(next.getMonth() + 1); break;
+      }
+
+      db.runSync('UPDATE income_flows SET expected_date = ? WHERE id = ?', [next.toISOString(), row.id]);
+    }
+
+    // Reload state after all credits applied
+    const finalBalance = getMeta(db, 'balance');
+    const finalHistory = getMeta(db, 'balance_history');
+    if (finalBalance !== null) {
+      setBalance(parseFloat(finalBalance));
+      _writeWidgetBalance(parseFloat(finalBalance));
+    }
+    if (finalHistory) setBalanceHistory(JSON.parse(finalHistory));
+    setIncomeFlows(db.getAllSync('SELECT * FROM income_flows', []).map(_rowToIncomeFlow));
+  };
+
   // ─── Onboarding completion — Requirements: 6.1, 6.2 ─────────────────────
   /**
    * Called by OnboardingScreen when the user taps Done on Step 2.
@@ -614,6 +683,7 @@ export const DataProvider = ({ children }) => {
       updateGoalSaving,
       addIncomeFlow,
       updateIncomeFlow,
+      deleteIncomeFlow,
       addCustomCategory,
       setBudget,
       getBudgets,
@@ -623,6 +693,7 @@ export const DataProvider = ({ children }) => {
       dismissNotifBanner,
       onboardingComplete,
       completeOnboarding,
+      checkAndAutoAddIncome,
       getDB,
     }}>
       {children}

@@ -2,7 +2,8 @@
   "expo": {
     "name": "FiB - Finance Buddy",
     "slug": "fib-finance-buddy",
-    "version": "1.1.0",
+    "version": "1.2.0",
+    "scheme": "financebuddy",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -24,8 +25,12 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
+      "notification": {
+        "icon": "./assets/notification-icon.png",
+        "color": "#000000"
+      },
       "package": "com.fib.financebuddy",
-      "versionCode": 3
+      "versionCode": 4
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -49,12 +54,10 @@
               "minHeight": "110dp",
               "updatePeriodMillis": 1800000,
               "description": "Shows your balance and lets you log a quick expense",
-              "previewImage": "./assets/icon.png",
-              "widgetFeatures": [
-                "reconfigurable"
-              ]
+              "previewImage": "./assets/icon.png"
             }
-          ]
+          ],
+          "taskHandlerFile": "./widget/FiBWidget"
         }
       ],
       "expo-sqlite"
