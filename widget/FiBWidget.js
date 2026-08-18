@@ -7,18 +7,21 @@
  */
 import React from 'react';
 import { registerWidgetTaskHandler } from 'react-native-android-widget';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SQLite from 'expo-sqlite';
 import FiBWidgetPreview from './FiBWidgetPreview';
 
-const WIDGET_BALANCE_KEY = 'fibWidgetBalance';
-
-async function readWidgetBalance() {
+function readSpentToday() {
   try {
-    const raw = await AsyncStorage.getItem(WIDGET_BALANCE_KEY);
-    if (raw !== null) return { balance: JSON.parse(raw), hasError: false };
-    return { balance: 0, hasError: false };
+    const db = SQLite.openDatabaseSync('fib.db');
+    const today = new Date();
+    const todayPrefix = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const row = db.getFirstSync(
+      `SELECT COALESCE(SUM(amount), 0) as total FROM expenses WHERE date LIKE ?`,
+      [`${todayPrefix}%`],
+    );
+    return { spentToday: row ? row.total : 0, hasError: false };
   } catch {
-    return { balance: 0, hasError: true };
+    return { spentToday: 0, hasError: true };
   }
 }
 
@@ -31,8 +34,8 @@ async function widgetTaskHandler({ widgetAction, widgetInfo, renderWidget }) {
     case 'WIDGET_ADDED':
     case 'WIDGET_UPDATE':
     case 'WIDGET_RESIZED': {
-      const { balance, hasError } = await readWidgetBalance();
-      renderWidget(<FiBWidgetPreview balance={balance} hasError={hasError} />);
+      const { spentToday, hasError } = readSpentToday();
+      renderWidget(<FiBWidgetPreview spentToday={spentToday} hasError={hasError} />);
       break;
     }
 
@@ -49,4 +52,4 @@ async function widgetTaskHandler({ widgetAction, widgetInfo, renderWidget }) {
 
 registerWidgetTaskHandler(widgetTaskHandler);
 
-export { widgetTaskHandler, readWidgetBalance };
+export { widgetTaskHandler, readSpentToday };

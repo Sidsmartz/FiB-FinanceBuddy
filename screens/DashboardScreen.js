@@ -262,7 +262,7 @@ export default function DashboardScreen({ navigation }) {
     const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
     const days = [];
     const amounts = [];
-    
+
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(selectedYear, selectedMonth, day);
       const dayExpenses = monthlyExpenses.filter(exp => {
@@ -270,7 +270,7 @@ export default function DashboardScreen({ navigation }) {
         return expDate.getDate() === day;
       });
       const total = dayExpenses.reduce((sum, exp) => sum + exp.amount, 0);
-      
+
       // Only show every 3rd day label to avoid crowding
       days.push(day % 3 === 1 ? day.toString() : '');
       amounts.push(total);
@@ -303,444 +303,444 @@ export default function DashboardScreen({ navigation }) {
           {tapRupees.map(rupee => (
             <TapRupee key={rupee.id} x={rupee.x} y={rupee.y} id={rupee.id} onComplete={removeRupee} />
           ))}
-          
+
           <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-          {/* Notification denied banner — Requirements: 5.3 */}
-          {notifDenied && (
-            <Animatable.View animation="fadeInDown" style={styles.notifBanner}>
-              <Text style={styles.notifBannerText}>Enable notifications to get daily reminders</Text>
-              <View style={styles.notifBannerActions}>
-                <TouchableOpacity
-                  style={styles.notifBannerButton}
-                  onPress={() => Linking.openSettings()}
-                >
-                  <Text style={styles.notifBannerButtonText}>SETTINGS</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.notifBannerDismiss}
-                  onPress={dismissNotifBanner}
-                >
-                  <Text style={styles.notifBannerDismissText}>✕</Text>
-                </TouchableOpacity>
-              </View>
-            </Animatable.View>
-          )}
-          {/* Month Navigation */}
-          {/* Personalised greeting — Requirements: 8.1, 8.2, 8.3 */}
-          {!!userName && (
-            <Animatable.View key={`greeting-${animKey}`} animation="fadeInDown" delay={50} style={styles.greetingContainer}>
-              <Text style={styles.greetingText}>
-                Hello, {userName}! Good {getTimeOfDay(new Date().getHours())}
-              </Text>
-            </Animatable.View>
-          )}
-          {/* Month Navigation */}
-          <Animatable.View key={`month-${animKey}`} animation="fadeInDown" delay={100} style={styles.monthNav}>
-            <TouchableOpacity onPress={goToPreviousMonth} style={styles.navButton}>
-              <Text style={styles.navArrow}>◄</Text>
-            </TouchableOpacity>
-            <Text style={styles.monthLabel}>{getMonthLabel()}</Text>
-            <TouchableOpacity 
-              onPress={goToNextMonth} 
-              style={styles.navButton}
-              disabled={selectedYear === new Date().getFullYear() && selectedMonth === new Date().getMonth()}
-            >
-              <Text style={[styles.navArrow, (selectedYear === new Date().getFullYear() && selectedMonth === new Date().getMonth()) && styles.navDisabled]}>►</Text>
-            </TouchableOpacity>
-          </Animatable.View>
-
-          {/* Bongo Cat - separate from balance */}
-          <Animatable.View key={`cat-${animKey}`} animation="bounceIn" duration={1500} style={styles.catContainer}>
-            <BongoCat size={Dimensions.get('window').width * 0.6} />
-          </Animatable.View>
-
-          {/* Balance box - only show for current month */}
-          {isCurrentMonth && (
-            <Animatable.View key={`balance-${animKey}`} animation="fadeInUp" delay={200} style={styles.balanceRow}>
-              <View style={[styles.box, styles.balanceBox]}>
-                <Text style={styles.title}>BALANCE.</Text>
-                <Text style={styles.amount}>₹{balance.toFixed(2)}</Text>
-              </View>
-              {streak > 0 && (
-                <View style={styles.streakPill}>
-                  <Text style={styles.streakText}>🔥 {streak} day streak</Text>
+            {/* Notification denied banner — Requirements: 5.3 */}
+            {notifDenied && (
+              <Animatable.View animation="fadeInDown" style={styles.notifBanner}>
+                <Text style={styles.notifBannerText}>Enable notifications to get daily reminders</Text>
+                <View style={styles.notifBannerActions}>
+                  <TouchableOpacity
+                    style={styles.notifBannerButton}
+                    onPress={() => Linking.openSettings()}
+                  >
+                    <Text style={styles.notifBannerButtonText}>SETTINGS</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.notifBannerDismiss}
+                    onPress={dismissNotifBanner}
+                  >
+                    <Text style={styles.notifBannerDismissText}>✕</Text>
+                  </TouchableOpacity>
                 </View>
+              </Animatable.View>
+            )}
+            {/* Month Navigation */}
+            {/* Personalised greeting — Requirements: 8.1, 8.2, 8.3 */}
+            {!!userName && (
+              <Animatable.View key={`greeting-${animKey}`} animation="fadeInDown" delay={50} style={styles.greetingContainer}>
+                <Text style={styles.greetingText}>
+                  Hello, {userName}! Good {getTimeOfDay(new Date().getHours())}
+                </Text>
+              </Animatable.View>
+            )}
+            {/* Month Navigation */}
+            <Animatable.View key={`month-${animKey}`} animation="fadeInDown" delay={100} style={styles.monthNav}>
+              <TouchableOpacity onPress={goToPreviousMonth} style={styles.navButton}>
+                <Text style={styles.navArrow}>◄</Text>
+              </TouchableOpacity>
+              <Text style={styles.monthLabel}>{getMonthLabel()}</Text>
+              <TouchableOpacity
+                onPress={goToNextMonth}
+                style={styles.navButton}
+                disabled={selectedYear === new Date().getFullYear() && selectedMonth === new Date().getMonth()}
+              >
+                <Text style={[styles.navArrow, (selectedYear === new Date().getFullYear() && selectedMonth === new Date().getMonth()) && styles.navDisabled]}>►</Text>
+              </TouchableOpacity>
+            </Animatable.View>
+
+            {/* Bongo Cat - separate from balance */}
+            <Animatable.View key={`cat-${animKey}`} animation="bounceIn" duration={1500} style={styles.catContainer}>
+              <BongoCat size={Dimensions.get('window').width * 0.6} />
+            </Animatable.View>
+
+            {/* Balance box - only show for current month */}
+            {isCurrentMonth && (
+              <Animatable.View key={`balance-${animKey}`} animation="fadeInUp" delay={200} style={styles.balanceRow}>
+                <View style={[styles.box, styles.balanceBox]}>
+                  <Text style={styles.title}>BALANCE.</Text>
+                  <Text style={styles.amount}>₹{balance.toFixed(2)}</Text>
+                </View>
+                {streak > 0 && (
+                  <View style={styles.streakPill}>
+                    <Text style={styles.streakText}>🔥 {streak} day streak</Text>
+                  </View>
+                )}
+              </Animatable.View>
+            )}
+
+            <Animatable.View key={`spent-${animKey}`} animation="fadeInUp" delay={isCurrentMonth ? 400 : 200} style={styles.box}>
+              <Text style={styles.title}>SPENT THIS MONTH.</Text>
+              <Text style={styles.amount}>₹{totalSpent.toFixed(2)}</Text>
+            </Animatable.View>
+
+            <Animatable.View key={`saved-${animKey}`} animation="fadeInUp" delay={isCurrentMonth ? 500 : 300} style={styles.boxGreen}>
+              <Text style={styles.title}>SAVED THIS MONTH.</Text>
+              <Text style={styles.amountGreen}>₹{totalSaved.toFixed(2)}</Text>
+            </Animatable.View>
+
+            {/* Insight card — month-over-month comparison. Requirements: 4.1–4.5 */}
+            <Animatable.View key={`insight-${animKey}`} animation="fadeInUp" delay={isCurrentMonth ? 550 : 250} style={styles.box}>
+              <Text style={styles.title}>MONTH OVER MONTH.</Text>
+              {insightEntries === null ? (
+                <Text style={styles.emptyText}>Not enough data yet — keep logging!</Text>
+              ) : (
+                <>
+                  {/* Primary insight — largest absolute change */}
+                  {(() => {
+                    const primary = insightEntries[0];
+                    const isIncrease = primary.delta > 0;
+                    const tintColor = isIncrease ? '#ff6b6b' : '#4ade80';
+                    const arrow = isIncrease ? '▲' : '▼';
+                    const pctStr = isFinite(primary.pct)
+                      ? `${Math.abs(primary.pct).toFixed(0)}%`
+                      : 'new';
+                    return (
+                      <View style={styles.insightPrimary}>
+                        <Text style={[styles.insightPrimaryText, { color: tintColor }]}>
+                          {arrow} {primary.category}: ₹{Math.abs(primary.delta).toFixed(0)} ({pctStr})
+                        </Text>
+                      </View>
+                    );
+                  })()}
+
+                  {/* 2-column list of all category changes */}
+                  <View style={styles.insightGrid}>
+                    {insightEntries.map((entry) => {
+                      const isIncrease = entry.delta > 0;
+                      const colour = isIncrease ? '#ff6b6b' : '#4ade80';
+                      const arrow = isIncrease ? '▲' : entry.delta < 0 ? '▼' : '–';
+                      const pctStr = isFinite(entry.pct)
+                        ? `${Math.abs(entry.pct).toFixed(0)}%`
+                        : 'new';
+                      return (
+                        <View key={entry.category} style={styles.insightCell}>
+                          <Text style={styles.insightCatText} numberOfLines={1}>{entry.category}</Text>
+                          <Text style={[styles.insightChangeText, { color: colour }]}>
+                            {arrow} {pctStr}
+                          </Text>
+                        </View>
+                      );
+                    })}
+                  </View>
+                </>
               )}
             </Animatable.View>
-          )}
 
-          <Animatable.View key={`spent-${animKey}`} animation="fadeInUp" delay={isCurrentMonth ? 400 : 200} style={styles.box}>
-            <Text style={styles.title}>SPENT THIS MONTH.</Text>
-            <Text style={styles.amount}>₹{totalSpent.toFixed(2)}</Text>
-        </Animatable.View>
+            {/* Last 7 days - only for current month */}
+            {isCurrentMonth && last7DaysData.amounts.some(a => a > 0) && (
+              <Animatable.View key={`chart-${animKey}`} animation="fadeInUp" delay={600} style={styles.box}>
+                <Text style={styles.title}>LAST 7 DAYS SPENDING.</Text>
+                <LineChart
+                  data={{
+                    labels: last7DaysData.days,
+                    datasets: [{ data: last7DaysData.amounts.length > 0 ? last7DaysData.amounts : [0] }],
+                  }}
+                  width={Dimensions.get('window').width - 80}
+                  height={180}
+                  chartConfig={{
+                    backgroundColor: '#000000',
+                    backgroundGradientFrom: '#0a0a0a',
+                    backgroundGradientTo: '#1a1a1a',
+                    decimalPlaces: 0,
+                    color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                    labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                    style: { borderRadius: 0 },
+                    propsForDots: {
+                      r: '4',
+                      strokeWidth: '2',
+                      stroke: '#ffffff',
+                    },
+                  }}
+                  bezier
+                  style={styles.chart}
+                />
+              </Animatable.View>
+            )}
 
-        <Animatable.View key={`saved-${animKey}`} animation="fadeInUp" delay={isCurrentMonth ? 500 : 300} style={styles.boxGreen}>
-            <Text style={styles.title}>SAVED THIS MONTH.</Text>
-            <Text style={styles.amountGreen}>₹{totalSaved.toFixed(2)}</Text>
-        </Animatable.View>
+            {/* Full month graph - with toggle */}
+            {showMonthGraph && monthSpendingData.amounts.some(a => a > 0) && (
+              <Animatable.View key={`monthchart-${animKey}`} animation="fadeInUp" delay={isCurrentMonth ? 700 : 400} style={styles.box}>
+                <View style={styles.chartHeader}>
+                  <Text style={styles.title}>MONTHLY SPENDING.</Text>
+                  <TouchableOpacity onPress={() => setShowMonthGraph(false)}>
+                    <Text style={styles.toggleText}>HIDE</Text>
+                  </TouchableOpacity>
+                </View>
+                <LineChart
+                  data={{
+                    labels: monthSpendingData.days,
+                    datasets: [{ data: monthSpendingData.amounts.length > 0 ? monthSpendingData.amounts : [0] }],
+                  }}
+                  width={Dimensions.get('window').width - 80}
+                  height={200}
+                  chartConfig={{
+                    backgroundColor: '#000000',
+                    backgroundGradientFrom: '#0a0a0a',
+                    backgroundGradientTo: '#1a1a1a',
+                    decimalPlaces: 0,
+                    color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                    labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                    style: { borderRadius: 0 },
+                    propsForDots: {
+                      r: '2',
+                      strokeWidth: '1',
+                      stroke: '#ffffff',
+                    },
+                  }}
+                  bezier
+                  style={styles.chart}
+                />
+              </Animatable.View>
+            )}
 
-        {/* Insight card — month-over-month comparison. Requirements: 4.1–4.5 */}
-        <Animatable.View key={`insight-${animKey}`} animation="fadeInUp" delay={isCurrentMonth ? 550 : 250} style={styles.box}>
-          <Text style={styles.title}>MONTH OVER MONTH.</Text>
-          {insightEntries === null ? (
-            <Text style={styles.emptyText}>Not enough data yet — keep logging!</Text>
-          ) : (
-            <>
-              {/* Primary insight — largest absolute change */}
-              {(() => {
-                const primary = insightEntries[0];
-                const isIncrease = primary.delta > 0;
-                const tintColor = isIncrease ? '#ff6b6b' : '#4ade80';
-                const arrow = isIncrease ? '▲' : '▼';
-                const pctStr = isFinite(primary.pct)
-                  ? `${Math.abs(primary.pct).toFixed(0)}%`
-                  : 'new';
-                return (
-                  <View style={styles.insightPrimary}>
-                    <Text style={[styles.insightPrimaryText, { color: tintColor }]}>
-                      {arrow} {primary.category}: ₹{Math.abs(primary.delta).toFixed(0)} ({pctStr})
-                    </Text>
-                  </View>
-                );
-              })()}
+            {!showMonthGraph && (
+              <Animatable.View key={`showgraph-${animKey}`} animation="fadeInUp" style={styles.boxToggle}>
+                <TouchableOpacity onPress={() => setShowMonthGraph(true)}>
+                  <Text style={styles.toggleTextLarge}>SHOW MONTHLY GRAPH</Text>
+                </TouchableOpacity>
+              </Animatable.View>
+            )}
 
-              {/* 2-column list of all category changes */}
-              <View style={styles.insightGrid}>
-                {insightEntries.map((entry) => {
-                  const isIncrease = entry.delta > 0;
-                  const colour = isIncrease ? '#ff6b6b' : '#4ade80';
-                  const arrow = isIncrease ? '▲' : entry.delta < 0 ? '▼' : '–';
-                  const pctStr = isFinite(entry.pct)
-                    ? `${Math.abs(entry.pct).toFixed(0)}%`
-                    : 'new';
+            {categoryData.length > 0 && (
+              <Animatable.View key={`pie-${animKey}`} animation="fadeInUp" delay={isCurrentMonth ? 800 : 500} style={styles.box}>
+                <Text style={styles.title}>SPENDING BY CATEGORY.</Text>
+                <PieChart
+                  data={categoryData}
+                  width={Dimensions.get('window').width - 80}
+                  height={200}
+                  chartConfig={{
+                    color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                    backgroundColor: '#000000',
+                  }}
+                  accessor="amount"
+                  backgroundColor="transparent"
+                  paddingLeft="10"
+                  absolute
+                />
+              </Animatable.View>
+            )}
+
+            {/* Budget progress bars */}
+            <Animatable.View key={`budget-${animKey}`} animation="fadeInUp" delay={isCurrentMonth ? 900 : 550} style={styles.box}>
+              <View style={styles.budgetHeader}>
+                <Text style={styles.title}>MONTHLY BUDGETS.</Text>
+                <TouchableOpacity onPress={() => navigation.navigate('Budget')} style={styles.budgetLink}>
+                  <Text style={styles.budgetLinkText}>SET →</Text>
+                </TouchableOpacity>
+              </View>
+              {budgetStatuses.length === 0 ? (
+                <TouchableOpacity onPress={() => navigation.navigate('Budget')}>
+                  <Text style={styles.emptyText}>No budgets set — tap to set up budgets</Text>
+                </TouchableOpacity>
+              ) : (
+                budgetStatuses.map((status) => {
+                  const colour = getBudgetColour(status.percent);
+                  const barColour = colour === 'red' ? '#ff6b6b' : colour === 'amber' ? '#f59e0b' : '#4ade80';
+                  const fillWidth = Math.min(status.percent, 100);
                   return (
-                    <View key={entry.category} style={styles.insightCell}>
-                      <Text style={styles.insightCatText} numberOfLines={1}>{entry.category}</Text>
-                      <Text style={[styles.insightChangeText, { color: colour }]}>
-                        {arrow} {pctStr}
-                      </Text>
+                    <View key={status.category} style={styles.budgetRow}>
+                      <View style={styles.budgetLabelRow}>
+                        <Text style={styles.budgetCategoryText}>{status.category}</Text>
+                        <Text style={[styles.budgetAmountText, { color: barColour }]}>
+                          ₹{status.spent.toFixed(0)} / ₹{status.limit.toFixed(0)}
+                        </Text>
+                      </View>
+                      <View style={styles.progressTrack}>
+                        <View style={[styles.progressFill, { width: `${fillWidth}%`, backgroundColor: barColour }]} />
+                      </View>
                     </View>
                   );
-                })}
-              </View>
-            </>
-          )}
-        </Animatable.View>
-
-        {/* Last 7 days - only for current month */}
-        {isCurrentMonth && last7DaysData.amounts.some(a => a > 0) && (
-          <Animatable.View key={`chart-${animKey}`} animation="fadeInUp" delay={600} style={styles.box}>
-            <Text style={styles.title}>LAST 7 DAYS SPENDING.</Text>
-            <LineChart
-              data={{
-                labels: last7DaysData.days,
-                datasets: [{ data: last7DaysData.amounts.length > 0 ? last7DaysData.amounts : [0] }],
-              }}
-              width={Dimensions.get('window').width - 80}
-              height={180}
-              chartConfig={{
-                backgroundColor: '#000000',
-                backgroundGradientFrom: '#0a0a0a',
-                backgroundGradientTo: '#1a1a1a',
-                decimalPlaces: 0,
-                color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                style: { borderRadius: 0 },
-                propsForDots: {
-                  r: '4',
-                  strokeWidth: '2',
-                  stroke: '#ffffff',
-                },
-              }}
-              bezier
-              style={styles.chart}
-            />
-          </Animatable.View>
-        )}
-
-        {/* Full month graph - with toggle */}
-        {showMonthGraph && monthSpendingData.amounts.some(a => a > 0) && (
-          <Animatable.View key={`monthchart-${animKey}`} animation="fadeInUp" delay={isCurrentMonth ? 700 : 400} style={styles.box}>
-            <View style={styles.chartHeader}>
-              <Text style={styles.title}>MONTHLY SPENDING.</Text>
-              <TouchableOpacity onPress={() => setShowMonthGraph(false)}>
-                <Text style={styles.toggleText}>HIDE</Text>
-              </TouchableOpacity>
-            </View>
-            <LineChart
-              data={{
-                labels: monthSpendingData.days,
-                datasets: [{ data: monthSpendingData.amounts.length > 0 ? monthSpendingData.amounts : [0] }],
-              }}
-              width={Dimensions.get('window').width - 80}
-              height={200}
-              chartConfig={{
-                backgroundColor: '#000000',
-                backgroundGradientFrom: '#0a0a0a',
-                backgroundGradientTo: '#1a1a1a',
-                decimalPlaces: 0,
-                color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                style: { borderRadius: 0 },
-                propsForDots: {
-                  r: '2',
-                  strokeWidth: '1',
-                  stroke: '#ffffff',
-                },
-              }}
-              bezier
-              style={styles.chart}
-            />
-          </Animatable.View>
-        )}
-
-        {!showMonthGraph && (
-          <Animatable.View key={`showgraph-${animKey}`} animation="fadeInUp" style={styles.boxToggle}>
-            <TouchableOpacity onPress={() => setShowMonthGraph(true)}>
-              <Text style={styles.toggleTextLarge}>SHOW MONTHLY GRAPH</Text>
-            </TouchableOpacity>
-          </Animatable.View>
-        )}
-
-        {categoryData.length > 0 && (
-          <Animatable.View key={`pie-${animKey}`} animation="fadeInUp" delay={isCurrentMonth ? 800 : 500} style={styles.box}>
-            <Text style={styles.title}>SPENDING BY CATEGORY.</Text>
-            <PieChart
-              data={categoryData}
-              width={Dimensions.get('window').width - 80}
-              height={200}
-              chartConfig={{
-                color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                backgroundColor: '#000000',
-              }}
-              accessor="amount"
-              backgroundColor="transparent"
-              paddingLeft="10"
-              absolute
-            />
-          </Animatable.View>
-        )}
-
-        {/* Budget progress bars */}
-        <Animatable.View key={`budget-${animKey}`} animation="fadeInUp" delay={isCurrentMonth ? 900 : 550} style={styles.box}>
-          <View style={styles.budgetHeader}>
-            <Text style={styles.title}>MONTHLY BUDGETS.</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Budget')} style={styles.budgetLink}>
-              <Text style={styles.budgetLinkText}>SET →</Text>
-            </TouchableOpacity>
-          </View>
-          {budgetStatuses.length === 0 ? (
-            <TouchableOpacity onPress={() => navigation.navigate('Budget')}>
-              <Text style={styles.emptyText}>No budgets set — tap to set up budgets</Text>
-            </TouchableOpacity>
-          ) : (
-            budgetStatuses.map((status) => {
-              const colour = getBudgetColour(status.percent);
-              const barColour = colour === 'red' ? '#ff6b6b' : colour === 'amber' ? '#f59e0b' : '#4ade80';
-              const fillWidth = Math.min(status.percent, 100);
-              return (
-                <View key={status.category} style={styles.budgetRow}>
-                  <View style={styles.budgetLabelRow}>
-                    <Text style={styles.budgetCategoryText}>{status.category}</Text>
-                    <Text style={[styles.budgetAmountText, { color: barColour }]}>
-                      ₹{status.spent.toFixed(0)} / ₹{status.limit.toFixed(0)}
-                    </Text>
-                  </View>
-                  <View style={styles.progressTrack}>
-                    <View style={[styles.progressFill, { width: `${fillWidth}%`, backgroundColor: barColour }]} />
-                  </View>
-                </View>
-              );
-            })
-          )}
-        </Animatable.View>
-
-        <Animatable.View key={`recent-${animKey}`} animation="fadeInUp" delay={isCurrentMonth ? 1000 : 600} style={styles.boxGray}>
-          <Text style={styles.title}>{isCurrentMonth ? 'RECENT EXPENSES.' : 'TRANSACTIONS.'}</Text>
-          {monthlyExpenses.length === 0 ? (
-            <Text style={styles.emptyText}>No expenses yet</Text>
-          ) : (
-            monthlyExpenses.slice(isCurrentMonth ? -5 : 0).reverse().map((exp, idx) => (
-              <Animatable.View 
-                key={exp.id} 
-                animation="fadeInRight" 
-                delay={(isCurrentMonth ? 1100 : 700) + (idx * 100)}
-                style={styles.expenseItem}
-              >
-                <View style={styles.expenseInfo}>
-                  <Text style={styles.expenseText}>{exp.title}</Text>
-                  <Text style={styles.expenseCategory}>
-                    {exp.category} ΓÇó {new Date(exp.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
-                  </Text>
-                </View>
-                <View style={styles.expenseRight}>
-                  <Text style={styles.expenseAmount}>₹{exp.amount}</Text>
-                  <View style={styles.expenseActions}>
-                    <TouchableOpacity onPress={() => handleEditExpense(exp)} style={styles.actionButton}>
-                      <Text style={styles.actionText}>✎</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => handleDeleteExpense(exp.id)} style={styles.actionButton}>
-                      <Text style={styles.deleteActionText}>×</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </Animatable.View>
-            ))
-          )}
-        </Animatable.View>
-
-        {/* Edit Modal */}
-        <Modal
-          visible={editingExpense !== null}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setEditingExpense(null)}
-        >
-          <View style={styles.modalOverlay}>
-            <Animatable.View animation="zoomIn" duration={300} style={styles.modalBox}>
-              <Text style={styles.modalTitle}>EDIT TRANSACTION.</Text>
-              
-              <TextInput
-                style={styles.input}
-                placeholder="Title"
-                placeholderTextColor="#444444"
-                value={editTitle}
-                onChangeText={setEditTitle}
-              />
-
-              <TextInput
-                style={styles.input}
-                placeholder="Amount"
-                placeholderTextColor="#444444"
-                value={editAmount}
-                onChangeText={setEditAmount}
-                keyboardType="numeric"
-              />
-
-              <TouchableOpacity 
-                style={styles.input} 
-                onPress={() => setShowCategoryModal(true)}
-              >
-                <Text style={[styles.inputText, !editCategory && styles.placeholder]}>
-                  {editCategory || 'Select Category'}
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={styles.input} 
-                onPress={() => setShowEditDateModal(true)}
-              >
-                <Text style={styles.inputText}>
-                  {editDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                </Text>
-              </TouchableOpacity>
-
-              {showEditDateModal && (
-                <DateTimePicker
-                  value={editDate}
-                  mode="date"
-                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                  onChange={(event, selectedDate) => {
-                    setShowEditDateModal(Platform.OS === 'ios');
-                    if (selectedDate) {
-                      setEditDate(selectedDate);
-                    }
-                  }}
-                  maximumDate={new Date()}
-                />
+                })
               )}
-
-              <TouchableOpacity 
-                style={styles.button}
-                onPress={handleSaveEdit}
-              >
-                <Text style={styles.buttonText}>SAVE</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={styles.closeButton}
-                onPress={() => setEditingExpense(null)}
-              >
-                <Text style={styles.buttonText}>CANCEL</Text>
-              </TouchableOpacity>
             </Animatable.View>
-          </View>
-        </Modal>
 
-        {/* Category Modal */}
-        <Modal
-          visible={showCategoryModal}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setShowCategoryModal(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <Animatable.View animation="zoomIn" duration={300} style={styles.modalBox}>
-              <Text style={styles.modalTitle}>SELECT CATEGORY.</Text>
-              {categories.map((cat, idx) => (
-                <Animatable.View
-                  key={cat.id}
-                  animation="fadeInRight"
-                  delay={idx * 50}
-                >
-                  <TouchableOpacity
-                    style={styles.categoryItem}
-                    onPress={() => {
-                      setEditCategory(cat.label);
-                      setShowCategoryModal(false);
-                    }}
+            <Animatable.View key={`recent-${animKey}`} animation="fadeInUp" delay={isCurrentMonth ? 1000 : 600} style={styles.boxGray}>
+              <Text style={styles.title}>{isCurrentMonth ? 'RECENT EXPENSES.' : 'TRANSACTIONS.'}</Text>
+              {monthlyExpenses.length === 0 ? (
+                <Text style={styles.emptyText}>No expenses yet</Text>
+              ) : (
+                monthlyExpenses.slice(isCurrentMonth ? -5 : 0).reverse().map((exp, idx) => (
+                  <Animatable.View
+                    key={exp.id}
+                    animation="fadeInRight"
+                    delay={(isCurrentMonth ? 1100 : 700) + (idx * 100)}
+                    style={styles.expenseItem}
                   >
-                    <Text style={styles.categoryText}>{cat.label}</Text>
+                    <View style={styles.expenseInfo}>
+                      <Text style={styles.expenseText}>{exp.title}</Text>
+                      <Text style={styles.expenseCategory}>
+                        {exp.category} {'\u00B7'} {new Date(exp.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                      </Text>
+                    </View>
+                    <View style={styles.expenseRight}>
+                      <Text style={styles.expenseAmount}>₹{exp.amount}</Text>
+                      <View style={styles.expenseActions}>
+                        <TouchableOpacity onPress={() => handleEditExpense(exp)} style={styles.actionButton}>
+                          <Text style={styles.actionText}>✎</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => handleDeleteExpense(exp.id)} style={styles.actionButton}>
+                          <Text style={styles.deleteActionText}>×</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </Animatable.View>
+                ))
+              )}
+            </Animatable.View>
+
+            {/* Edit Modal */}
+            <Modal
+              visible={editingExpense !== null}
+              transparent
+              animationType="fade"
+              onRequestClose={() => setEditingExpense(null)}
+            >
+              <View style={styles.modalOverlay}>
+                <Animatable.View animation="zoomIn" duration={300} style={styles.modalBox}>
+                  <Text style={styles.modalTitle}>EDIT TRANSACTION.</Text>
+
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Title"
+                    placeholderTextColor="#444444"
+                    value={editTitle}
+                    onChangeText={setEditTitle}
+                  />
+
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Amount"
+                    placeholderTextColor="#444444"
+                    value={editAmount}
+                    onChangeText={setEditAmount}
+                    keyboardType="numeric"
+                  />
+
+                  <TouchableOpacity
+                    style={styles.input}
+                    onPress={() => setShowCategoryModal(true)}
+                  >
+                    <Text style={[styles.inputText, !editCategory && styles.placeholder]}>
+                      {editCategory || 'Select Category'}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.input}
+                    onPress={() => setShowEditDateModal(true)}
+                  >
+                    <Text style={styles.inputText}>
+                      {editDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    </Text>
+                  </TouchableOpacity>
+
+                  {showEditDateModal && (
+                    <DateTimePicker
+                      value={editDate}
+                      mode="date"
+                      display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                      onChange={(event, selectedDate) => {
+                        setShowEditDateModal(Platform.OS === 'ios');
+                        if (selectedDate) {
+                          setEditDate(selectedDate);
+                        }
+                      }}
+                      maximumDate={new Date()}
+                    />
+                  )}
+
+                  <TouchableOpacity
+                    style={styles.button}
+                    onPress={handleSaveEdit}
+                  >
+                    <Text style={styles.buttonText}>SAVE</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.closeButton}
+                    onPress={() => setEditingExpense(null)}
+                  >
+                    <Text style={styles.buttonText}>CANCEL</Text>
                   </TouchableOpacity>
                 </Animatable.View>
-              ))}
-              <Animatable.View animation="fadeInRight" delay={categories.length * 50}>
-                <TouchableOpacity
-                  style={[styles.categoryItem, styles.addCategoryItem]}
-                  onPress={() => { setShowCategoryModal(false); setShowAddCatModal(true); }}
-                >
-                  <Text style={styles.addCategoryText}>+ Add category</Text>
-                </TouchableOpacity>
-              </Animatable.View>
-              <TouchableOpacity 
-                style={styles.closeButton}
-                onPress={() => setShowCategoryModal(false)}
-              >
-                <Text style={styles.buttonText}>CLOSE</Text>
-              </TouchableOpacity>
-            </Animatable.View>
-          </View>
-        </Modal>
+              </View>
+            </Modal>
 
-        {/* Add Category Modal */}
-        <Modal
-          visible={showAddCatModal}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setShowAddCatModal(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <Animatable.View animation="zoomIn" duration={300} style={styles.modalBox}>
-              <Text style={styles.modalTitle}>ADD CATEGORY.</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Category name"
-                placeholderTextColor="#444444"
-                value={newCatLabel}
-                onChangeText={(v) => { setNewCatLabel(v); setAddCatError(''); }}
-                autoFocus
-              />
-              {addCatError !== '' && <Text style={styles.errorText}>{addCatError}</Text>}
-              <TouchableOpacity style={styles.button} onPress={handleAddCategory}>
-                <Text style={styles.buttonText}>ADD</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.closeButton} onPress={() => { setShowAddCatModal(false); setNewCatLabel(''); setAddCatError(''); }}>
-                <Text style={styles.buttonText}>CANCEL</Text>
-              </TouchableOpacity>
-            </Animatable.View>
-          </View>
-        </Modal>
-      </Animated.View>
+            {/* Category Modal */}
+            <Modal
+              visible={showCategoryModal}
+              transparent
+              animationType="fade"
+              onRequestClose={() => setShowCategoryModal(false)}
+            >
+              <View style={styles.modalOverlay}>
+                <Animatable.View animation="zoomIn" duration={300} style={styles.modalBox}>
+                  <Text style={styles.modalTitle}>SELECT CATEGORY.</Text>
+                  {categories.map((cat, idx) => (
+                    <Animatable.View
+                      key={cat.id}
+                      animation="fadeInRight"
+                      delay={idx * 50}
+                    >
+                      <TouchableOpacity
+                        style={styles.categoryItem}
+                        onPress={() => {
+                          setEditCategory(cat.label);
+                          setShowCategoryModal(false);
+                        }}
+                      >
+                        <Text style={styles.categoryText}>{cat.label}</Text>
+                      </TouchableOpacity>
+                    </Animatable.View>
+                  ))}
+                  <Animatable.View animation="fadeInRight" delay={categories.length * 50}>
+                    <TouchableOpacity
+                      style={[styles.categoryItem, styles.addCategoryItem]}
+                      onPress={() => { setShowCategoryModal(false); setShowAddCatModal(true); }}
+                    >
+                      <Text style={styles.addCategoryText}>+ Add category</Text>
+                    </TouchableOpacity>
+                  </Animatable.View>
+                  <TouchableOpacity
+                    style={styles.closeButton}
+                    onPress={() => setShowCategoryModal(false)}
+                  >
+                    <Text style={styles.buttonText}>CLOSE</Text>
+                  </TouchableOpacity>
+                </Animatable.View>
+              </View>
+            </Modal>
+
+            {/* Add Category Modal */}
+            <Modal
+              visible={showAddCatModal}
+              transparent
+              animationType="fade"
+              onRequestClose={() => setShowAddCatModal(false)}
+            >
+              <View style={styles.modalOverlay}>
+                <Animatable.View animation="zoomIn" duration={300} style={styles.modalBox}>
+                  <Text style={styles.modalTitle}>ADD CATEGORY.</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Category name"
+                    placeholderTextColor="#444444"
+                    value={newCatLabel}
+                    onChangeText={(v) => { setNewCatLabel(v); setAddCatError(''); }}
+                    autoFocus
+                  />
+                  {addCatError !== '' && <Text style={styles.errorText}>{addCatError}</Text>}
+                  <TouchableOpacity style={styles.button} onPress={handleAddCategory}>
+                    <Text style={styles.buttonText}>ADD</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.closeButton} onPress={() => { setShowAddCatModal(false); setNewCatLabel(''); setAddCatError(''); }}>
+                    <Text style={styles.buttonText}>CANCEL</Text>
+                  </TouchableOpacity>
+                </Animatable.View>
+              </View>
+            </Modal>
+          </Animated.View>
         </View>
       </TouchableWithoutFeedback>
     </ScrollView>

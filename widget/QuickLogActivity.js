@@ -3,24 +3,33 @@
  * Shows amount input + horizontal category scroll + confirm button.
  * Writes directly to SQLite via expo-sqlite (same DB as the main app).
  */
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
   ScrollView, StyleSheet, SafeAreaView,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SQLite from 'expo-sqlite';
 import { requestWidgetUpdate } from 'react-native-android-widget';
+import { useFocusEffect } from '@react-navigation/native';
+import { useData } from '../context/DataContext';
 import FiBWidgetPreview from './FiBWidgetPreview';
 import { CATEGORIES } from '../constants/categories';
 import { validateAmount } from '../utils/validation';
 
-const WIDGET_BALANCE_KEY = 'fibWidgetBalance';
+function getSpentToday(db) {
+  const today = new Date();
+  const todayPrefix = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const row = db.getFirstSync(
+    `SELECT COALESCE(SUM(amount), 0) as total FROM expenses WHERE date LIKE ?`,
+    [`${todayPrefix}%`],
+  );
+  return row ? row.total : 0;
+}
 
 async function writeExpenseToSQLite(amount, category) {
   try {
     const db = SQLite.openDatabaseSync('fib.db');
-    const id = Date.now().toString();
+    const id = `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
     const date = new Date().toISOString();
 
     db.runSync(
@@ -35,12 +44,13 @@ async function writeExpenseToSQLite(amount, category) {
     const newBalance = currentBalance - amount;
     db.runSync('INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)', ['balance', String(newBalance)]);
 
-    // Keep widget balance key in sync
-    await AsyncStorage.setItem(WIDGET_BALANCE_KEY, JSON.stringify(newBalance));
-    return true;
+    // Read today's total from SQLite for the widget
+    const spentToday = getSpentToday(db);
+
+    return { success: true, spentToday };
   } catch (err) {
     console.error('[FiB] QuickLogActivity SQLite error:', err);
-    return false;
+    return { success: false, spentToday: 0 };
   }
 }
 
@@ -49,6 +59,19 @@ export default function QuickLogActivity({ onDone }) {
   const [category, setCategory] = useState('');
   const [error, setError] = useState('');
   const [done, setDone] = useState(false);
+  const { reloadData } = useData();
+
+  // Reset all form state every time this screen gains focus.
+  // This fixes the issue where React Navigation reuses the same component
+  // instance on subsequent deep-link navigations from the widget.
+  useFocusEffect(
+    useCallback(() => {
+      setAmount('');
+      setCategory('');
+      setError('');
+      setDone(false);
+    }, [])
+  );
 
   const canConfirm = validateAmount(amount) && category !== '';
 
@@ -59,14 +82,18 @@ export default function QuickLogActivity({ onDone }) {
     }
     setError('');
 
-    const success = await writeExpenseToSQLite(parseFloat(amount), category);
+    const { success, spentToday } = await writeExpenseToSQLite(parseFloat(amount), category);
     if (success) {
+      // 1. Force the main app UI to refresh from SQLite immediately!
+      if (reloadData) {
+        reloadData();
+      }
+
+      // 2. Safely tell the Android widget to update its preview
       try {
-        const raw = await AsyncStorage.getItem(WIDGET_BALANCE_KEY);
-        const newBal = raw !== null ? JSON.parse(raw) : 0;
         await requestWidgetUpdate({
           widgetName: 'FiBWidget',
-          renderWidget: () => <FiBWidgetPreview balance={newBal} hasError={false} />,
+          renderWidget: () => <FiBWidgetPreview spentToday={spentToday} hasError={false} />,
         });
       } catch (_) { }
     }

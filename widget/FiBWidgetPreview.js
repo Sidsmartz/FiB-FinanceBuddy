@@ -1,7 +1,11 @@
 /**
  * FiB home-screen widget layout — 2×1 dark style.
  * Uses react-native-android-widget primitives.
- * Requirements: 2.1
+ * Shows "Amount Spent Today" instead of balance.
+ *
+ * The entire widget is one tappable surface (clickAction on root FlexWidget).
+ * Using a nested clickable FlexWidget caused tap events to stop routing
+ * correctly after the first requestWidgetUpdate call.
  */
 import React from 'react';
 import {
@@ -11,16 +15,18 @@ import {
 
 /**
  * @param {object} props
- * @param {number} props.balance  Current balance to display
- * @param {boolean} props.hasError  True when last AsyncStorage read failed
+ * @param {number} props.spentToday  Total amount spent today
+ * @param {boolean} props.hasError  True when last SQLite read failed
  */
-export default function FiBWidgetPreview({ balance = 0, hasError = false }) {
-  const balanceText = hasError
+export default function FiBWidgetPreview({ spentToday = 0, hasError = false }) {
+  const amountText = hasError
     ? '₹ ─'
-    : `₹${Number(balance).toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
+    : `₹${Number(spentToday).toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
 
   return (
     <FlexWidget
+      clickAction="OPEN_URI"
+      clickActionData={{ uri: 'financebuddy://quicklog' }}
       style={{
         width: 'match_parent',
         height: 'match_parent',
@@ -43,9 +49,20 @@ export default function FiBWidgetPreview({ balance = 0, hasError = false }) {
         }}
       />
 
-      {/* Balance */}
+      {/* Amount Spent Today label */}
       <TextWidget
-        text={balanceText}
+        text="Amount Spent Today:"
+        style={{
+          color: '#999999',
+          fontSize: 8,
+          letterSpacing: 1,
+          marginBottom: 2,
+        }}
+      />
+
+      {/* Amount */}
+      <TextWidget
+        text={amountText}
         style={{
           color: '#ffffff',
           fontSize: 20,
@@ -53,10 +70,8 @@ export default function FiBWidgetPreview({ balance = 0, hasError = false }) {
         }}
       />
 
-      {/* Log Expense button */}
+      {/* LOG EXPENSE label — purely visual, tap is handled by root widget */}
       <FlexWidget
-        clickAction="OPEN_URI"
-        clickActionData={{ uri: 'financebuddy://quicklog' }}
         style={{
           backgroundColor: '#1a1a1a',
           borderRadius: 4,

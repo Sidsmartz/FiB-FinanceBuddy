@@ -1,0 +1,3 @@
+﻿v1.3.0 feat: implement DashboardScreen, data context, and home screen widgets for expense tracking
+Apk icon fix
+

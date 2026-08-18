@@ -1,26 +1,15 @@
-import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { createContext, useState, useContext, useEffect, useRef, useCallback } from 'react';
 import * as Notifications from 'expo-notifications';
+import { AppState } from 'react-native';
 import { applyUpdateExpense, applyDeleteSavingsGoal, computeBudgetStatus, computeNewStreak } from '../utils/dataLogic';
 import { initDB, getMeta, setMeta, runMigrationIfNeeded } from '../utils/db';
 import { DEFAULT_CATEGORIES } from '../constants/categories';
 
 const MAX_CATEGORIES = 20;
 
-const WIDGET_BALANCE_KEY = 'fibWidgetBalance';
-
 const DataContext = createContext();
 
 export const useData = () => useContext(DataContext);
-
-// ─── Widget balance helper ────────────────────────────────────────────────────
-async function _writeWidgetBalance(newBalance) {
-  try {
-    await AsyncStorage.setItem(WIDGET_BALANCE_KEY, JSON.stringify(newBalance));
-  } catch (err) {
-    console.error('[FiB] Failed to write widget balance:', err);
-  }
-}
 
 export const DataProvider = ({ children }) => {
   const [expenses, setExpenses] = useState([]);
@@ -50,6 +39,16 @@ export const DataProvider = ({ children }) => {
       await setupNotifications(db);
     }
     init();
+  }, []);
+
+  // ─── Reload data on app foreground (fixes stale state after widget QuickLog) ─
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active' && dbRef.current) {
+        loadData(dbRef.current);
+      }
+    });
+    return () => subscription.remove();
   }, []);
 
   // ─── Notification setup — Task 9.1 ─────────────────────────────────────────
@@ -189,7 +188,6 @@ export const DataProvider = ({ children }) => {
 
     setExpenses(prev => [...prev, newExpense]);
     setBalance(newBalance);
-    _writeWidgetBalance(newBalance);
 
     // Update streak whenever an expense is logged — Requirements: 5.4
     const today = new Date();
@@ -225,7 +223,6 @@ export const DataProvider = ({ children }) => {
 
     setExpenses(newExpenses);
     setBalance(newBalance);
-    _writeWidgetBalance(newBalance);
   };
 
   const deleteExpense = (id) => {
@@ -240,7 +237,6 @@ export const DataProvider = ({ children }) => {
 
     setExpenses(newExpenses);
     setBalance(newBalance);
-    _writeWidgetBalance(newBalance);
   };
 
   // ─── Savings mutations — Task 3.3 ─────────────────────────────────────────
@@ -271,7 +267,7 @@ export const DataProvider = ({ children }) => {
 
     setSavings(prev => [...prev, newSaving]);
     setBalance(newBalance);
-    _writeWidgetBalance(newBalance);
+    // Widget shows expenses only — savings don't affect "spent today"
   };
 
   const deleteSaving = (id) => {
@@ -299,7 +295,7 @@ export const DataProvider = ({ children }) => {
 
     setSavings(newSavings);
     setBalance(newBalance);
-    _writeWidgetBalance(newBalance);
+    // Widget shows expenses only — savings don't affect "spent today"
   };
 
   const createSavingsGoal = (goal) => {
@@ -329,7 +325,7 @@ export const DataProvider = ({ children }) => {
     setSavingsGoals(newGoals);
     setSavings(newSavings);
     setBalance(newBalance);
-    _writeWidgetBalance(newBalance);
+    // Widget shows expenses only — goal deletion doesn't affect "spent today"
   };
 
   // ─── Balance / income mutations — Task 3.4 ────────────────────────────────
@@ -351,7 +347,7 @@ export const DataProvider = ({ children }) => {
 
     setBalance(newBalance);
     setBalanceHistory(newHistory);
-    _writeWidgetBalance(newBalance);
+    // Widget shows expenses only — balance additions don't affect "spent today"
   };
 
   const deleteBalanceHistory = (id) => {
@@ -366,7 +362,7 @@ export const DataProvider = ({ children }) => {
 
     setBalance(newBalance);
     setBalanceHistory(newHistory);
-    _writeWidgetBalance(newBalance);
+    // Widget shows expenses only — balance history deletion doesn't affect "spent today"
   };
 
   const updateEmergencySavings = (amount) => {
@@ -620,7 +616,7 @@ export const DataProvider = ({ children }) => {
     const finalHistory = getMeta(db, 'balance_history');
     if (finalBalance !== null) {
       setBalance(parseFloat(finalBalance));
-      _writeWidgetBalance(parseFloat(finalBalance));
+      // Widget shows expenses only — income auto-add doesn't affect "spent today"
     }
     if (finalHistory) setBalanceHistory(JSON.parse(finalHistory));
     setIncomeFlows(db.getAllSync('SELECT * FROM income_flows', []).map(_rowToIncomeFlow));
@@ -654,6 +650,12 @@ export const DataProvider = ({ children }) => {
 
   // Expose the raw DB reference for consumers that need direct meta access
   const getDB = () => dbRef.current;
+
+  // ─── Reload data (callable externally, e.g. after widget QuickLog) ────────
+  const reloadData = useCallback(() => {
+    const db = dbRef.current;
+    if (db) loadData(db);
+  }, []);
 
   return (
     <DataContext.Provider value={{
@@ -695,6 +697,7 @@ export const DataProvider = ({ children }) => {
       completeOnboarding,
       checkAndAutoAddIncome,
       getDB,
+      reloadData,
     }}>
       {children}
     </DataContext.Provider>

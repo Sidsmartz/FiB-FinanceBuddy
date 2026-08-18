@@ -2,10 +2,10 @@
   "expo": {
     "name": "FiB - Finance Buddy",
     "slug": "fib-finance-buddy",
-    "version": "1.2.0",
+    "version": "1.3.0",
     "scheme": "financebuddy",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./playstoreassets/icon.png",
     "userInterfaceStyle": "dark",
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -20,17 +20,13 @@
       "bundleIdentifier": "com.fib.financebuddy"
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
-      },
+      "icon": "./playstoreassets/icon.png",
       "notification": {
         "icon": "./assets/notification-icon.png",
         "color": "#000000"
       },
       "package": "com.fib.financebuddy",
-      "versionCode": 4
+      "versionCode": 5
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -49,12 +45,12 @@
           "widgets": [
             {
               "name": "FiBWidget",
-              "label": "FiB Balance",
+              "label": "FiB Spending",
               "minWidth": "180dp",
               "minHeight": "110dp",
               "updatePeriodMillis": 1800000,
-              "description": "Shows your balance and lets you log a quick expense",
-              "previewImage": "./assets/icon.png"
+              "description": "Shows amount spent today and lets you log a quick expense",
+              "previewImage": "./playstoreassets/icon.png"
             }
           ],
           "taskHandlerFile": "./widget/FiBWidget"
