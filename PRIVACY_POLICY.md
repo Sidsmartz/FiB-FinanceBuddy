@@ -1,20 +1,53 @@
 # Privacy Policy for FinanceBuddy
 
-**Effective Date:** July 27, 2026
+**Effective Date:** August 22, 2026
 
-## 1. Information Collection and Use
-FinanceBuddy is designed with your privacy in mind. We **do not** collect, store, or transmit any personally identifiable information (PII). 
+FinanceBuddy ("FiB") is a **free, offline, and open-source** finance tracking application designed with privacy in mind.
 
-The app operates completely offline, and all your financial data, transactions, and settings are stored locally on your device.
+## 1. Data Collection
 
-## 2. Analytics
-We may collect basic, anonymous analytics data (such as install counts and crash reports) strictly for the purpose of improving the app's performance and understanding its usage. This data contains no personal information and cannot be linked back to you.
+FiB does not collect, store, transmit, or share personal information.
 
-## 3. Data Retention and Updates
-Your data remains securely on your device. When you update the app via the App Store or Google Play Store, **your data will not be lost**. App updates are designed to preserve all local storage. However, if you uninstall the app or clear its data in your device settings, your stored data will be permanently deleted unless you have made a manual backup.
+Any information you enter into FiB, such as expense entries, spending amounts, savings goals, and app settings, is stored locally on your device. This information is not sent to the developer or to any third-party server.
 
-## 4. Changes to This Privacy Policy
-We may update our Privacy Policy from time to time. You are advised to review this page periodically for any changes.
+FiB does not require an account, login, or registration.
 
-## 5. Contact Us
-If you have any questions or suggestions about our Privacy Policy, do not hesitate to contact us.
+## 2. Notifications
+
+FiB may schedule local notifications, including a daily reminder at 8:00 PM.
+
+These notifications are generated and scheduled locally on your device. FiB does not send your notification data to any server.
+
+You can disable notifications through your device settings.
+
+## 3. Donations
+
+FiB is free and contains no advertisements or paid features.
+
+FiB includes an optional **"Buy me a diet coke"** link that opens a Razorpay payment page for users who wish to support the developer.
+
+FiB does not collect, process, or store any payment information. Any information provided during a donation is handled by Razorpay.
+
+## 4. Data Storage and Deletion
+
+All data created within FiB is stored locally on your device.
+
+The developer cannot access or recover your expense entries, spending data, savings goals, or other locally stored app data.
+
+Uninstalling FiB or clearing its app data may permanently delete your locally stored data.
+
+## 5. Analytics and Tracking
+
+FiB does not use third-party analytics, advertising, or tracking services to collect information from users.
+
+Any aggregate statistics made available to the developer through Google Play are provided by Google Play and are not collected by FiB.
+
+## 6. Changes to This Privacy Policy
+
+This Privacy Policy may be updated if the functionality or privacy practices of FiB change. Any updates will be published with a revised effective date.
+
+## 7. Contact
+
+For questions or concerns regarding this Privacy Policy, please contact:
+
+**Email:** siddhartht4206@gmail.com
