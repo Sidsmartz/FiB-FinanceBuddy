@@ -154,22 +154,24 @@ export default function GoalsScreen() {
         </View>
       </Modal>
 
-      <View style={styles.supportSection}>
-        <Text style={styles.supportTitle}>FiB is free & ad-free forever 🐱</Text>
-        <TouchableOpacity
-          style={styles.chaiButton}
-          onPress={() =>
-            Linking.openURL('https://support-fib.vercel.app')
-          }
-        >
-          <Text style={styles.chaiButtonText}>🥤 Buy me a diet coke.</Text>
-        </TouchableOpacity>
-        <Text style={styles.supportSubtext}>Keeps your cat buddy fed</Text>
-      </View>
+      <Animatable.View key={`support-${animKey}`} animation="fadeInUp" delay={350}>
+        <View style={styles.supportSection}>
+          <Text style={styles.supportTitle}>FiB is free & ad-free forever 🐱</Text>
+          <TouchableOpacity
+            style={styles.chaiButton}
+            onPress={() =>
+              Linking.openURL('https://rzp.io/rzp/yMmDBjaO')
+            }
+          >
+            <Text style={styles.chaiButtonText}>🥤 Buy me a diet coke.</Text>
+          </TouchableOpacity>
+          <Text style={styles.supportSubtext}>Keeps your cat buddy fed</Text>
+        </View>
 
-      <View style={styles.attributionContainer}>
-        <Text style={styles.attributionText}>Piggy Bank 3D Model by Sketchfab Users</Text>
-      </View>
+        <View style={styles.attributionContainer}>
+          <Text style={styles.attributionText}>Piggy Bank 3D Model by Sketchfab Users</Text>
+        </View>
+      </Animatable.View>
     </ScrollView>
   );
 }

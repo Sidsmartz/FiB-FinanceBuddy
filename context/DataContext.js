@@ -25,6 +25,7 @@ export const DataProvider = ({ children }) => {
   const [notifDenied, setNotifDenied] = useState(false);
   const [userName, setUserName] = useState('');
   const [onboardingComplete, setOnboardingComplete] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // SQLite database instance — initialised once on mount
   const dbRef = useRef(null);
@@ -35,8 +36,10 @@ export const DataProvider = ({ children }) => {
       dbRef.current = db;
       await runMigrationIfNeeded(db);
       loadData(db);
+      // Run the auto-add logic *after* initial state is loaded
       checkAndAutoAddIncome();
       await setupNotifications(db);
+      setIsLoading(false);
     }
     init();
   }, []);
@@ -698,6 +701,7 @@ export const DataProvider = ({ children }) => {
       checkAndAutoAddIncome,
       getDB,
       reloadData,
+      isLoading,
     }}>
       {children}
     </DataContext.Provider>

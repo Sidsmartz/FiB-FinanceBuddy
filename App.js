@@ -14,6 +14,9 @@ import BudgetScreen from './screens/BudgetScreen';
 import OnboardingScreen from './screens/OnboardingScreen';
 import { DataProvider, useData } from './context/DataContext';
 import QuickLogActivity from './widget/QuickLogActivity';
+import BongoCat from './components/BongoCat';
+import * as Animatable from 'react-native-animatable';
+import { Dimensions, ActivityIndicator } from 'react-native';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -106,7 +109,26 @@ function MainTabs() {
  * Requirements: 6.1, 6.2 — gates between OnboardingScreen and main tabs.
  */
 function AppRoot() {
-  const { onboardingComplete } = useData();
+  const { onboardingComplete, isLoading } = useData();
+
+  if (isLoading) {
+    return (
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: '#000000', justifyContent: 'center', alignItems: 'center' }]}>
+        <Animatable.View animation="pulse" easing="ease-out" iterationCount="infinite" style={{ alignItems: 'center' }}>
+          <BongoCat size={Dimensions.get('window').width * 0.4} />
+          <Text style={{
+            color: '#7eb8ff',
+            fontFamily: 'PixelFont',
+            fontSize: 12,
+            letterSpacing: 2,
+            marginTop: 24,
+          }}>
+            LOADING FiB...
+          </Text>
+        </Animatable.View>
+      </View>
+    );
+  }
 
   if (!onboardingComplete) {
     return <OnboardingScreen />;

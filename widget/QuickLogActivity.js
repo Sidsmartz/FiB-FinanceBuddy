@@ -59,7 +59,21 @@ export default function QuickLogActivity({ onDone }) {
   const [category, setCategory] = useState('');
   const [error, setError] = useState('');
   const [done, setDone] = useState(false);
-  const { reloadData } = useData();
+  const { reloadData, onboardingComplete } = useData();
+
+  if (!onboardingComplete) {
+    return (
+      <View style={styles.overlay}>
+        <View style={styles.container}>
+          <Text style={styles.title}>COMPLETE ONBOARDING FIRST</Text>
+          <Text style={styles.subtitle}>Open the app and set up your initial balance before using this widget.</Text>
+          <TouchableOpacity style={styles.cancelBtn} onPress={() => { setDone(true); if (onDone) onDone(); }}>
+            <Text style={styles.cancelText}>CLOSE</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   // Reset all form state every time this screen gains focus.
   // This fixes the issue where React Navigation reuses the same component
