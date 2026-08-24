@@ -15,7 +15,7 @@ import {
 import { useData } from '../context/DataContext';
 
 export default function BudgetScreen() {
-  const { categories, getBudgets, setBudget } = useData();
+  const { categories, getBudgets, setBudget, currency } = useData();
   const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
 
   // Map of category id → current limit string shown in the input
@@ -59,7 +59,7 @@ export default function BudgetScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <Text style={styles.heading}>MONTHLY BUDGETS.</Text>
-      <Text style={styles.subheading}>Tap a field and enter a limit (₹). Saves on blur.</Text>
+      <Text style={styles.subheading}>Tap a field and enter a limit ({currency}). Saves on blur.</Text>
       <FlatList
         data={categories}
         keyExtractor={(item) => item.id}

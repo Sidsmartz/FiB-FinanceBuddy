@@ -11,6 +11,7 @@ import ExpenseScreen from './screens/ExpenseScreen';
 import GoalsScreen from './screens/GoalsScreen';
 import TransactionsScreen from './screens/TransactionsScreen';
 import BudgetScreen from './screens/BudgetScreen';
+import SettingsScreen from './screens/SettingsScreen';
 import OnboardingScreen from './screens/OnboardingScreen';
 import { DataProvider, useData } from './context/DataContext';
 import QuickLogActivity from './widget/QuickLogActivity';
@@ -165,12 +166,20 @@ function DashboardStack() {
         options={({ navigation }) => ({
           headerTitle: () => <HeaderTitle />,
           headerRight: () => (
-            <TouchableOpacity
-              onPress={() => navigation.navigate('Budget')}
-              style={{ paddingRight: 8 }}
-            >
-              <Ionicons name="wallet-outline" size={22} color="#ffffff" />
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingRight: 4 }}>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('Budget')}
+                style={{ padding: 4 }}
+              >
+                <Ionicons name="wallet-outline" size={22} color="#ffffff" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('Settings')}
+                style={{ padding: 4 }}
+              >
+                <Ionicons name="settings-outline" size={22} color="#ffffff" />
+              </TouchableOpacity>
+            </View>
           ),
         })}
       />
@@ -178,6 +187,11 @@ function DashboardStack() {
         name="Budget"
         component={BudgetScreen}
         options={{ title: 'Monthly Budgets' }}
+      />
+      <Stack.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{ title: 'Settings' }}
       />
     </Stack.Navigator>
   );

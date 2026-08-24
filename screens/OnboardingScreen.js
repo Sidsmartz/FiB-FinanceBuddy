@@ -45,7 +45,7 @@ If you have any questions or suggestions about our Privacy Policy, do not hesita
 const FREQUENCIES = ['Monthly', 'Weekly', 'Bi-weekly', 'Irregular'];
 
 export default function OnboardingScreen() {
-  const { categories, addIncomeFlow, setBudget, getDB, completeOnboarding } = useData();
+  const { categories, addIncomeFlow, setBudget, getDB, completeOnboarding, currency, setAppCurrency } = useData();
 
   // ─── Step state ───────────────────────────────────────────────────────────
   const [step, setStep] = useState(0);
@@ -53,6 +53,7 @@ export default function OnboardingScreen() {
   // Step 0 — Welcome
   const [nameInput, setNameInput] = useState('');
   const [showPrivacy, setShowPrivacy] = useState(false);
+  const [selectedCurrency, setSelectedCurrency] = useState('₹');
 
   // Step 1 — Income
   const [hasIncome, setHasIncome] = useState(null);
@@ -74,6 +75,7 @@ export default function OnboardingScreen() {
       const db = getDB();
       if (db) setMeta(db, 'user_name', trimmed);
     }
+    setAppCurrency(selectedCurrency);
     setStep(1);
   };
 
@@ -162,6 +164,23 @@ export default function OnboardingScreen() {
         autoCapitalize="words"
       />
 
+      <View style={styles.currencySection}>
+        <Text style={styles.label}>Select Currency:</Text>
+        <View style={styles.chipRow}>
+          {['$', '€', '£', '₹', '¥', 'A$'].map((sym) => (
+            <TouchableOpacity
+              key={sym}
+              style={[styles.chip, selectedCurrency === sym && styles.chipSelected]}
+              onPress={() => setSelectedCurrency(sym)}
+            >
+              <Text style={[styles.chipText, selectedCurrency === sym && styles.chipTextSelected]}>
+                {sym}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
       <TouchableOpacity onPress={() => setShowPrivacy(true)} style={styles.privacyLink}>
         <Text style={styles.privacyLinkText}>Privacy Policy</Text>
       </TouchableOpacity>
@@ -218,7 +237,7 @@ export default function OnboardingScreen() {
       {/* Amount — greyed out if no income */}
       <TextInput
         style={[styles.input, incomeFieldsDisabled && styles.inputDisabled]}
-        placeholder="Monthly amount (₹)"
+        placeholder={`Monthly amount (${currency})`}
         placeholderTextColor="#333333"
         value={incomeAmount}
         onChangeText={setIncomeAmount}
@@ -319,7 +338,7 @@ export default function OnboardingScreen() {
       {/* Amount input — shown once a category is selected */}
       {selectedCategory && (
         <Animatable.View animation="fadeIn" duration={300} style={{ width: '100%' }}>
-          <Text style={[styles.label, { marginTop: 16 }]}>Monthly limit (₹)</Text>
+          <Text style={[styles.label, { marginTop: 16 }]}>Monthly limit ({currency})</Text>
           <View style={styles.budgetInputRow}>
             <TextInput
               style={[styles.input, { flex: 1, marginBottom: 0 }]}
@@ -343,7 +362,7 @@ export default function OnboardingScreen() {
           {Object.entries(budgetInputs).map(([cat, val]) => (
             <View key={cat} style={styles.budgetSummaryRow}>
               <Text style={styles.budgetSummaryLabel}>{cat}</Text>
-              <Text style={styles.budgetSummaryValue}>₹{val}</Text>
+              <Text style={styles.budgetSummaryValue}>{currency}{val}</Text>
               <TouchableOpacity
                 onPress={() => setBudgetInputs((prev) => {
                   const next = { ...prev };
@@ -402,7 +421,7 @@ export default function OnboardingScreen() {
                     {item.label}
                   </Text>
                   {budgetInputs[item.label] ? (
-                    <Text style={styles.dropdownOptionBadge}>₹{budgetInputs[item.label]}</Text>
+                    <Text style={styles.dropdownOptionBadge}>{currency}{budgetInputs[item.label]}</Text>
                   ) : null}
                 </TouchableOpacity>
               ))}
@@ -482,6 +501,11 @@ const styles = StyleSheet.create({
     fontFamily: 'UbuntuMono',
     fontSize: 12,
     textDecorationLine: 'underline',
+  },
+  currencySection: {
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 20,
   },
 
   // ─── Step 1 ───────────────────────────────────────────────────────────────

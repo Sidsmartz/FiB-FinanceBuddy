@@ -12,7 +12,7 @@ import { validateAmount, sanitizeTitle, isNonEmptyTitle } from '../utils/validat
 // ─── Quick-Log Section ────────────────────────────────────────────────────────
 
 function QuickLogSection({ onSuccess }) {
-  const { addExpense, categories, addCustomCategory } = useData();
+  const { addExpense, categories, addCustomCategory, currency } = useData();
   const [amount, setAmount] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [error, setError] = useState('');
@@ -67,7 +67,7 @@ function QuickLogSection({ onSuccess }) {
 
       <TextInput
         style={[styles.input, error && !validateAmount(amount) ? styles.inputError : null]}
-        placeholder="Amount  ₹"
+        placeholder={`Amount  ${currency}`}
         placeholderTextColor="#444444"
         value={amount}
         onChangeText={handleAmountChange}
@@ -314,7 +314,7 @@ function FullLogSection({ onSuccess }) {
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function ExpenseScreen() {
-  const { addSaving, addBalance, savingsGoals } = useData();
+  const { addSaving, addBalance, savingsGoals, currency } = useData();
   const [balanceTitle, setBalanceTitle] = useState('');
   const [balanceAmount, setBalanceAmount] = useState('');
   const [savingAmount, setSavingAmount] = useState('');
@@ -459,7 +459,7 @@ export default function ExpenseScreen() {
                     >
                       <Text style={styles.categoryText}>{goal.name}</Text>
                       <Text style={styles.goalProgress}>
-                        ₹{goal.current.toFixed(2)}{goal.target ? ` / ₹${goal.target.toFixed(2)}` : ''}
+                        {currency}{goal.current.toFixed(2)}{goal.target ? ` / ${currency}${goal.target.toFixed(2)}` : ''}
                       </Text>
                     </TouchableOpacity>
                   </Animatable.View>

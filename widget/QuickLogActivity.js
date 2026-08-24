@@ -59,7 +59,7 @@ export default function QuickLogActivity({ onDone }) {
   const [category, setCategory] = useState('');
   const [error, setError] = useState('');
   const [done, setDone] = useState(false);
-  const { reloadData, onboardingComplete } = useData();
+  const { reloadData, onboardingComplete, currency } = useData();
 
   if (!onboardingComplete) {
     return (
@@ -107,7 +107,7 @@ export default function QuickLogActivity({ onDone }) {
       try {
         await requestWidgetUpdate({
           widgetName: 'FiBWidget',
-          renderWidget: () => <FiBWidgetPreview spentToday={spentToday} hasError={false} />,
+          renderWidget: () => <FiBWidgetPreview spentToday={spentToday} hasError={false} currency={currency} />,
         });
       } catch (_) { }
     }
@@ -131,7 +131,7 @@ export default function QuickLogActivity({ onDone }) {
 
         <TextInput
           style={[styles.input, error && !validateAmount(amount) ? styles.inputError : null]}
-          placeholder="Amount  ₹"
+          placeholder={`Amount  ${currency}`}
           placeholderTextColor="#444444"
           value={amount}
           onChangeText={v => { setAmount(v); if (error) setError(''); }}

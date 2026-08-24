@@ -26,6 +26,7 @@ export const DataProvider = ({ children }) => {
   const [userName, setUserName] = useState('');
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [currency, setCurrency] = useState('₹');
 
   // SQLite database instance — initialised once on mount
   const dbRef = useRef(null);
@@ -111,6 +112,10 @@ export const DataProvider = ({ children }) => {
       // Load onboarding state — Requirements: 6.1, 6.2
       const onboardingDone = getMeta(db, 'onboarding_complete');
       setOnboardingComplete(onboardingDone === '1');
+
+      // Load currency state
+      const storedCurrency = getMeta(db, 'user_currency');
+      setCurrency(storedCurrency ?? '₹');
 
       setExpenses(expensesRows.map(_rowToExpense));
       setSavings(savingsRows.map(_rowToSaving));
@@ -660,11 +665,19 @@ export const DataProvider = ({ children }) => {
     if (db) loadData(db);
   }, []);
 
+  const setAppCurrency = (symbol) => {
+    const db = dbRef.current;
+    if (db) setMeta(db, 'user_currency', symbol);
+    setCurrency(symbol);
+  };
+
   return (
     <DataContext.Provider value={{
       expenses,
       savings,
       savingsGoals,
+      currency,
+      setAppCurrency,
       balance,
       emergencySavings,
       goalSavings,

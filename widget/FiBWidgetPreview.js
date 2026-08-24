@@ -18,10 +18,10 @@ import {
  * @param {number} props.spentToday  Total amount spent today
  * @param {boolean} props.hasError  True when last SQLite read failed
  */
-export default function FiBWidgetPreview({ spentToday = 0, hasError = false }) {
+export default function FiBWidgetPreview({ spentToday = 0, hasError = false, currency = '₹' }) {
   const amountText = hasError
-    ? '₹ ─'
-    : `₹${Number(spentToday).toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
+    ? `${currency} ─`
+    : `${currency}${Number(spentToday).toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
 
   return (
     <FlexWidget

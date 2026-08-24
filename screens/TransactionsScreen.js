@@ -19,7 +19,7 @@ function formatDate(iso) {
 }
 
 export default function TransactionsScreen() {
-  const { expenses, balanceHistory, savings, deleteExpense, deleteBalanceHistory, deleteSaving } = useData();
+  const { expenses, balanceHistory, savings, deleteExpense, deleteBalanceHistory, deleteSaving, currency } = useData();
   const isFocused = useIsFocused();
   const [animKey, setAnimKey] = useState(0);
   const [activeTab, setActiveTab] = useState('EXPENSES');
@@ -145,7 +145,7 @@ export default function TransactionsScreen() {
       <Animatable.View key={`summary-${animKey}`} animation="fadeIn" delay={180} style={styles.summaryRow}>
         <Text style={styles.summaryLabel}>{filtered.length} ITEMS</Text>
         <Text style={styles.summaryAmount}>
-          {activeTab === 'BALANCE' ? '+' : '-'}₹{total.toFixed(2)}
+          {activeTab === 'BALANCE' ? '+' : '-'}{currency}{total.toFixed(2)}
         </Text>
       </Animatable.View>
 
@@ -166,7 +166,7 @@ export default function TransactionsScreen() {
                 <Text style={styles.itemMeta}>
                   {formatDate(item.date)}
                   {item.category ? `  ·  ${item.category}` : ''}
-                  {item.split ? `  ·  split ₹${item.split}` : ''}
+                  {item.split ? `  ·  split ${currency}${item.split}` : ''}
                 </Text>
               </View>
               <View style={styles.itemRight}>
@@ -174,7 +174,7 @@ export default function TransactionsScreen() {
                   styles.itemAmount,
                   activeTab === 'BALANCE' ? styles.amountGreen : styles.amountRed
                 ]}>
-                  {activeTab === 'BALANCE' ? '+' : '-'}₹{item.amount.toFixed(2)}
+                  {activeTab === 'BALANCE' ? '+' : '-'}{currency}{item.amount.toFixed(2)}
                 </Text>
                 <TouchableOpacity onPress={() => confirmDelete(item)} style={styles.deleteBtn}>
                   <Text style={styles.deleteText}>✕</Text>

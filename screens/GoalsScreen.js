@@ -7,7 +7,7 @@ import { useIsFocused } from '@react-navigation/native';
 import PiggyBank from '../components/PiggyBank';
 
 export default function GoalsScreen() {
-  const { savingsGoals, createSavingsGoal, deleteSavingsGoal } = useData();
+  const { savingsGoals, createSavingsGoal, deleteSavingsGoal, currency } = useData();
   const [animKey, setAnimKey] = useState(0);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newGoalName, setNewGoalName] = useState('');
@@ -91,8 +91,8 @@ export default function GoalsScreen() {
                 </TouchableOpacity>
               </View>
               <Text style={styles.goalAmount}>
-                ₹{goal.current.toFixed(2)}
-                {goal.target && ` / ₹${goal.target.toFixed(2)}`}
+                {currency}{goal.current.toFixed(2)}
+                {goal.target && ` / ${currency}${goal.target.toFixed(2)}`}
               </Text>
               {goal.target && (
                 <View style={styles.progressBar}>

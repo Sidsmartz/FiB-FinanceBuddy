@@ -44,13 +44,13 @@ const TapRupee = ({ x, y, id, onComplete }) => {
         },
       ]}
     >
-      ₹
+      {currency}
     </Animated.Text>
   );
 };
 
 export default function DashboardScreen({ navigation }) {
-  const { expenses, savings, balance, updateExpense, deleteExpense, categories, addCustomCategory, getBudgetStatus, getMonthTotals, streak, notifDenied, dismissNotifBanner, userName } = useData();
+  const { expenses, savings, balance, currency, updateExpense, deleteExpense, categories, addCustomCategory, getBudgetStatus, getMonthTotals, streak, notifDenied, dismissNotifBanner, userName } = useData();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
   const [tapRupees, setTapRupees] = useState([]);
@@ -359,7 +359,7 @@ export default function DashboardScreen({ navigation }) {
               <Animatable.View key={`balance-${animKey}`} animation="fadeInUp" delay={200} style={styles.balanceRow}>
                 <View style={[styles.box, styles.balanceBox]}>
                   <Text style={styles.title}>BALANCE.</Text>
-                  <Text style={styles.amount}>₹{balance.toFixed(2)}</Text>
+                  <Text style={styles.amount}>{currency}{balance.toFixed(2)}</Text>
                 </View>
                 {streak > 0 && (
                   <View style={styles.streakPill}>
@@ -371,12 +371,12 @@ export default function DashboardScreen({ navigation }) {
 
             <Animatable.View key={`spent-${animKey}`} animation="fadeInUp" delay={isCurrentMonth ? 400 : 200} style={styles.box}>
               <Text style={styles.title}>SPENT THIS MONTH.</Text>
-              <Text style={styles.amount}>₹{totalSpent.toFixed(2)}</Text>
+              <Text style={styles.amount}>{currency}{totalSpent.toFixed(2)}</Text>
             </Animatable.View>
 
             <Animatable.View key={`saved-${animKey}`} animation="fadeInUp" delay={isCurrentMonth ? 500 : 300} style={styles.boxGreen}>
               <Text style={styles.title}>SAVED THIS MONTH.</Text>
-              <Text style={styles.amountGreen}>₹{totalSaved.toFixed(2)}</Text>
+              <Text style={styles.amountGreen}>{currency}{totalSaved.toFixed(2)}</Text>
             </Animatable.View>
 
             {/* Insight card — month-over-month comparison. Requirements: 4.1–4.5 */}
@@ -398,7 +398,7 @@ export default function DashboardScreen({ navigation }) {
                     return (
                       <View style={styles.insightPrimary}>
                         <Text style={[styles.insightPrimaryText, { color: tintColor }]}>
-                          {arrow} {primary.category}: ₹{Math.abs(primary.delta).toFixed(0)} ({pctStr})
+                          {arrow} {primary.category}: {currency}{Math.abs(primary.delta).toFixed(0)} ({pctStr})
                         </Text>
                       </View>
                     );
@@ -543,7 +543,7 @@ export default function DashboardScreen({ navigation }) {
                       <View style={styles.budgetLabelRow}>
                         <Text style={styles.budgetCategoryText}>{status.category}</Text>
                         <Text style={[styles.budgetAmountText, { color: barColour }]}>
-                          ₹{status.spent.toFixed(0)} / ₹{status.limit.toFixed(0)}
+                          {currency}{status.spent.toFixed(0)} / {currency}{status.limit.toFixed(0)}
                         </Text>
                       </View>
                       <View style={styles.progressTrack}>
@@ -574,7 +574,7 @@ export default function DashboardScreen({ navigation }) {
                       </Text>
                     </View>
                     <View style={styles.expenseRight}>
-                      <Text style={styles.expenseAmount}>₹{exp.amount}</Text>
+                      <Text style={styles.expenseAmount}>{currency}{exp.amount}</Text>
                       <View style={styles.expenseActions}>
                         <TouchableOpacity onPress={() => handleEditExpense(exp)} style={styles.actionButton}>
                           <Text style={styles.actionText}>✎</Text>

@@ -5,7 +5,7 @@ import * as Animatable from 'react-native-animatable';
 import { useIsFocused } from '@react-navigation/native';
 
 export default function IncomeScreen() {
-  const { incomeFlows, addIncomeFlow, updateIncomeFlow, deleteIncomeFlow } = useData();
+  const { incomeFlows, addIncomeFlow, updateIncomeFlow, deleteIncomeFlow, currency } = useData();
   const [source, setSource] = useState('');
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState('');
@@ -40,10 +40,10 @@ export default function IncomeScreen() {
 
   const handlePlanAllocation = () => {
     if (!selectedFlow || !savingsAlloc || !spendAlloc) return;
-    
+
     const flow = incomeFlows.find(f => f.id === selectedFlow);
     const total = parseFloat(savingsAlloc) + parseFloat(spendAlloc);
-    
+
     if (total > flow.amount) {
       alert('Allocation exceeds income amount');
       return;
@@ -55,7 +55,7 @@ export default function IncomeScreen() {
         { type: 'Spend', amount: parseFloat(spendAlloc) },
       ],
     });
-    
+
     setSavingsAlloc('');
     setSpendAlloc('');
     setSelectedFlow(null);
@@ -115,15 +115,15 @@ export default function IncomeScreen() {
                 <Text style={styles.deleteText}>×</Text>
               </TouchableOpacity>
             </View>
-            <Text style={styles.flowAmount}>₹{flow.amount.toFixed(2)}</Text>
+            <Text style={styles.flowAmount}>{currency}{flow.amount.toFixed(2)}</Text>
             <Text style={styles.flowDate}>{flow.expectedDate}</Text>
-            
+
             {flow.allocations.length > 0 && (
               <View style={styles.allocations}>
                 <Text style={styles.allocTitle}>PLAN:</Text>
                 {flow.allocations.map((alloc, idx) => (
                   <Text key={idx} style={styles.allocText}>
-                    {alloc.type}: ₹{alloc.amount.toFixed(2)}
+                    {alloc.type}: {currency}{alloc.amount.toFixed(2)}
                   </Text>
                 ))}
               </View>
@@ -131,13 +131,13 @@ export default function IncomeScreen() {
 
             {!flow.completed && (
               <>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.smallButton}
                   onPress={() => setSelectedFlow(flow.id)}
                 >
                   <Text style={styles.buttonText}>PLAN ALLOCATION</Text>
                 </TouchableOpacity>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[styles.smallButton, { marginTop: 8 }]}
                   onPress={() => handleMarkComplete(flow.id)}
                 >
