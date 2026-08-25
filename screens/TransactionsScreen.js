@@ -8,10 +8,7 @@ import * as Animatable from 'react-native-animatable';
 import { useIsFocused } from '@react-navigation/native';
 import { useData } from '../context/DataContext';
 
-import { CATEGORIES as BASE_CATEGORIES } from '../constants/categories';
-
 const TABS = ['EXPENSES', 'BALANCE', 'SAVINGS'];
-const CATEGORIES = ['All', ...BASE_CATEGORIES];
 
 function formatDate(iso) {
   const d = new Date(iso);
@@ -19,7 +16,8 @@ function formatDate(iso) {
 }
 
 export default function TransactionsScreen() {
-  const { expenses, balanceHistory, savings, deleteExpense, deleteBalanceHistory, deleteSaving, currency } = useData();
+  const { expenses, balanceHistory, savings, deleteExpense, deleteBalanceHistory, deleteSaving, currency, categories } = useData();
+  const filterCategories = useMemo(() => ['All', ...categories.map(c => c.label)], [categories]);
   const isFocused = useIsFocused();
   const [animKey, setAnimKey] = useState(0);
   const [activeTab, setActiveTab] = useState('EXPENSES');
@@ -191,7 +189,7 @@ export default function TransactionsScreen() {
         <View style={styles.modalOverlay}>
           <Animatable.View animation="zoomIn" duration={250} style={styles.modalBox}>
             <Text style={styles.modalTitle}>FILTER BY CATEGORY.</Text>
-            {CATEGORIES.map((cat, idx) => (
+            {filterCategories.map((cat, idx) => (
               <Animatable.View key={cat} animation="fadeInRight" delay={idx * 40}>
                 <TouchableOpacity
                   style={[styles.catItem, categoryFilter === cat && styles.catItemActive]}

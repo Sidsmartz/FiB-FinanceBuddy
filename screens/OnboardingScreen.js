@@ -2,7 +2,7 @@
  * screens/OnboardingScreen.js — 3-step first-run onboarding pager.
  * Requirements: 6.1–6.11
  */
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,82 @@ import * as Animatable from 'react-native-animatable';
 import BongoCat from '../components/BongoCat';
 import { useData } from '../context/DataContext';
 import { setMeta } from '../utils/db';
+
+const CURRENCIES = [
+  { symbol: '$', label: 'USD  $', name: 'US Dollar' },
+  { symbol: '€', label: 'EUR  €', name: 'Euro' },
+  { symbol: '£', label: 'GBP  £', name: 'British Pound' },
+  { symbol: '₹', label: 'INR  ₹', name: 'Indian Rupee' },
+  { symbol: '¥', label: 'JPY  ¥', name: 'Japanese Yen' },
+  { symbol: '元', label: 'CNY 元', name: 'Chinese Yuan' },
+  { symbol: 'A$', label: 'AUD A$', name: 'Australian Dollar' },
+  { symbol: 'C$', label: 'CAD C$', name: 'Canadian Dollar' },
+  { symbol: 'Fr', label: 'CHF Fr', name: 'Swiss Franc' },
+  { symbol: 'kr', label: 'SEK kr', name: 'Swedish Krona' },
+  { symbol: 'kr', label: 'NOK kr', name: 'Norwegian Krone' },
+  { symbol: 'kr', label: 'DKK kr', name: 'Danish Krone' },
+  { symbol: 'NZ$', label: 'NZD NZ$', name: 'New Zealand Dollar' },
+  { symbol: 'S$', label: 'SGD S$', name: 'Singapore Dollar' },
+  { symbol: 'HK$', label: 'HKD HK$', name: 'Hong Kong Dollar' },
+  { symbol: 'NT$', label: 'TWD NT$', name: 'Taiwan Dollar' },
+  { symbol: '₩', label: 'KRW ₩', name: 'South Korean Won' },
+  { symbol: 'R$', label: 'BRL R$', name: 'Brazilian Real' },
+  { symbol: '₺', label: 'TRY ₺', name: 'Turkish Lira' },
+  { symbol: '₽', label: 'RUB ₽', name: 'Russian Ruble' },
+  { symbol: 'Mex$', label: 'MXN Mex$', name: 'Mexican Peso' },
+  { symbol: 'R', label: 'ZAR R', name: 'South African Rand' },
+  { symbol: '₦', label: 'NGN ₦', name: 'Nigerian Naira' },
+  { symbol: '₱', label: 'PHP ₱', name: 'Philippine Peso' },
+  { symbol: '₫', label: 'VND ₫', name: 'Vietnamese Dong' },
+  { symbol: '฿', label: 'THB ฿', name: 'Thai Baht' },
+  { symbol: 'Rp', label: 'IDR Rp', name: 'Indonesian Rupiah' },
+  { symbol: 'RM', label: 'MYR RM', name: 'Malaysian Ringgit' },
+  { symbol: '₨', label: 'PKR ₨', name: 'Pakistani Rupee' },
+  { symbol: '₨', label: 'LKR ₨', name: 'Sri Lankan Rupee' },
+  { symbol: '৳', label: 'BDT ৳', name: 'Bangladeshi Taka' },
+  { symbol: '₮', label: 'MNT ₮', name: 'Mongolian Tögrög' },
+  { symbol: '₼', label: 'AZN ₼', name: 'Azerbaijani Manat' },
+  { symbol: '֏', label: 'AMD ֏', name: 'Armenian Dram' },
+  { symbol: '₾', label: 'GEL ₾', name: 'Georgian Lari' },
+  { symbol: '₸', label: 'KZT ₸', name: 'Kazakhstani Tenge' },
+  { symbol: '؋', label: 'AFN ؋', name: 'Afghan Afghani' },
+  { symbol: 'Nu', label: 'BTN Nu', name: 'Bhutanese Ngultrum' },
+  { symbol: '₭', label: 'LAK ₭', name: 'Lao Kip' },
+  { symbol: 'K', label: 'MMK K', name: 'Myanmar Kyat' },
+  { symbol: '៛', label: 'KHR ៛', name: 'Cambodian Riel' },
+  { symbol: 'zł', label: 'PLN zł', name: 'Polish Złoty' },
+  { symbol: 'Kč', label: 'CZK Kč', name: 'Czech Koruna' },
+  { symbol: 'Ft', label: 'HUF Ft', name: 'Hungarian Forint' },
+  { symbol: 'lei', label: 'RON lei', name: 'Romanian Leu' },
+  { symbol: 'лв', label: 'BGN лв', name: 'Bulgarian Lev' },
+  { symbol: '₴', label: 'UAH ₴', name: 'Ukrainian Hryvnia' },
+  { symbol: 'kr', label: 'ISK kr', name: 'Icelandic Króna' },
+  { symbol: 'kn', label: 'HRK kn', name: 'Croatian Kuna' },
+  { symbol: 'din', label: 'RSD din', name: 'Serbian Dinar' },
+  { symbol: '₪', label: 'ILS ₪', name: 'Israeli Shekel' },
+  { symbol: '﷼', label: 'SAR ﷼', name: 'Saudi Riyal' },
+  { symbol: 'د.إ', label: 'AED د.إ', name: 'UAE Dirham' },
+  { symbol: 'KD', label: 'KWD KD', name: 'Kuwaiti Dinar' },
+  { symbol: 'BD', label: 'BHD BD', name: 'Bahraini Dinar' },
+  { symbol: 'QR', label: 'QAR QR', name: 'Qatari Riyal' },
+  { symbol: 'JD', label: 'JOD JD', name: 'Jordanian Dinar' },
+  { symbol: 'LE', label: 'EGP LE', name: 'Egyptian Pound' },
+  { symbol: 'MAD', label: 'MAD MAD', name: 'Moroccan Dirham' },
+  { symbol: 'Ksh', label: 'KES Ksh', name: 'Kenyan Shilling' },
+  { symbol: 'GH₵', label: 'GHS GH₵', name: 'Ghanaian Cedi' },
+  { symbol: 'CFA', label: 'XOF CFA', name: 'W. African CFA' },
+  { symbol: 'Br', label: 'ETB Br', name: 'Ethiopian Birr' },
+  { symbol: '$', label: 'ARS $', name: 'Argentine Peso' },
+  { symbol: 'COP$', label: 'COP COP$', name: 'Colombian Peso' },
+  { symbol: 'S/.', label: 'PEN S/.', name: 'Peruvian Sol' },
+  { symbol: 'CLP$', label: 'CLP CLP$', name: 'Chilean Peso' },
+  { symbol: 'RD$', label: 'DOP RD$', name: 'Dominican Peso' },
+  { symbol: 'J$', label: 'JMD J$', name: 'Jamaican Dollar' },
+  { symbol: '₲', label: 'PYG ₲', name: 'Paraguayan Guaraní' },
+  { symbol: 'FJ$', label: 'FJD FJ$', name: 'Fijian Dollar' },
+  { symbol: '₿', label: 'BTC ₿', name: 'Bitcoin' },
+  { symbol: 'Ξ', label: 'ETH Ξ', name: 'Ethereum' },
+];
 
 const PRIVACY_POLICY_TEXT = `Privacy Policy for FinanceBuddy
 
@@ -54,6 +130,15 @@ export default function OnboardingScreen() {
   const [nameInput, setNameInput] = useState('');
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState('₹');
+  const [showCurrencyDropdown, setShowCurrencyDropdown] = useState(false);
+  const [currencySearch, setCurrencySearch] = useState('');
+
+  const filteredCurrencies = useMemo(() => {
+    const q = currencySearch.toLowerCase();
+    return q
+      ? CURRENCIES.filter(c => c.name.toLowerCase().includes(q) || c.label.toLowerCase().includes(q))
+      : CURRENCIES;
+  }, [currencySearch]);
 
   // Step 1 — Income
   const [hasIncome, setHasIncome] = useState(null);
@@ -166,20 +251,68 @@ export default function OnboardingScreen() {
 
       <View style={styles.currencySection}>
         <Text style={styles.label}>Select Currency:</Text>
-        <View style={styles.chipRow}>
-          {['$', '€', '£', '₹', '¥', 'A$'].map((sym) => (
-            <TouchableOpacity
-              key={sym}
-              style={[styles.chip, selectedCurrency === sym && styles.chipSelected]}
-              onPress={() => setSelectedCurrency(sym)}
-            >
-              <Text style={[styles.chipText, selectedCurrency === sym && styles.chipTextSelected]}>
-                {sym}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        <TouchableOpacity
+          style={styles.currencyDropdownBtn}
+          onPress={() => { setCurrencySearch(''); setShowCurrencyDropdown(true); }}
+        >
+          <Text style={styles.currencyDropdownValue}>
+            {CURRENCIES.find(c => c.symbol === selectedCurrency)?.label || selectedCurrency}
+          </Text>
+          <Text style={styles.currencyDropdownChevron}>▾</Text>
+        </TouchableOpacity>
       </View>
+
+      {/* Currency picker modal */}
+      <Modal
+        visible={showCurrencyDropdown}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowCurrencyDropdown(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowCurrencyDropdown(false)}
+        >
+          <Animatable.View animation="slideInUp" duration={250} style={styles.currencyModal}>
+            <Text style={styles.currencyModalTitle}>SELECT CURRENCY</Text>
+            <TextInput
+              style={styles.currencySearch}
+              placeholder="Search..."
+              placeholderTextColor="#444444"
+              value={currencySearch}
+              onChangeText={setCurrencySearch}
+              autoFocus
+            />
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+              {filteredCurrencies.map((c, idx) => (
+                <TouchableOpacity
+                  key={`${c.symbol}-${idx}`}
+                  style={[
+                    styles.currencyOption,
+                    selectedCurrency === c.symbol && styles.currencyOptionSelected,
+                  ]}
+                  onPress={() => {
+                    setSelectedCurrency(c.symbol);
+                    setShowCurrencyDropdown(false);
+                  }}
+                >
+                  <Text style={[
+                    styles.currencyOptionText,
+                    selectedCurrency === c.symbol && styles.currencyOptionTextSelected,
+                  ]}>
+                    {c.label}
+                  </Text>
+                  <Text style={styles.currencyOptionName}>{c.name}</Text>
+                  {selectedCurrency === c.symbol && (
+                    <Text style={styles.currencyOptionCheck}>✓</Text>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </Animatable.View>
+        </TouchableOpacity>
+      </Modal>
 
       <TouchableOpacity onPress={() => setShowPrivacy(true)} style={styles.privacyLink}>
         <Text style={styles.privacyLinkText}>Privacy Policy</Text>
@@ -504,8 +637,86 @@ const styles = StyleSheet.create({
   },
   currencySection: {
     width: '100%',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 20,
+  },
+  currencyDropdownBtn: {
+    borderWidth: 1,
+    borderColor: '#333333',
+    padding: 14,
+    backgroundColor: '#0a0a0a',
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  currencyDropdownValue: {
+    color: '#ffffff',
+    fontFamily: 'UbuntuMono',
+    fontSize: 13,
+    flex: 1,
+  },
+  currencyDropdownChevron: {
+    color: '#666666',
+    fontSize: 14,
+    marginLeft: 8,
+  },
+  currencyModal: {
+    backgroundColor: '#0a0a0a',
+    borderWidth: 1,
+    borderColor: '#333333',
+    maxHeight: '70%',
+    padding: 16,
+    marginTop: 'auto',
+  },
+  currencyModalTitle: {
+    color: '#ffffff',
+    fontFamily: 'PixelFont',
+    fontSize: 10,
+    letterSpacing: 2,
+    marginBottom: 12,
+  },
+  currencySearch: {
+    borderWidth: 1,
+    borderColor: '#333333',
+    padding: 12,
+    marginBottom: 8,
+    color: '#ffffff',
+    fontFamily: 'UbuntuMono',
+    backgroundColor: '#000000',
+    fontSize: 12,
+  },
+  currencyOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 13,
+    paddingHorizontal: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#111111',
+  },
+  currencyOptionSelected: {
+    backgroundColor: '#0d1a2e',
+  },
+  currencyOptionText: {
+    color: '#cccccc',
+    fontFamily: 'UbuntuMono',
+    fontSize: 13,
+    width: 80,
+  },
+  currencyOptionTextSelected: {
+    color: '#4a9eff',
+  },
+  currencyOptionName: {
+    color: '#555555',
+    fontFamily: 'UbuntuMono',
+    fontSize: 11,
+    flex: 1,
+  },
+  currencyOptionCheck: {
+    color: '#4a9eff',
+    fontFamily: 'UbuntuMono',
+    fontSize: 12,
+    marginLeft: 8,
   },
 
   // ─── Step 1 ───────────────────────────────────────────────────────────────

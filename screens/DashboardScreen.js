@@ -10,7 +10,7 @@ import { getBudgetColour, computeInsights, getTimeOfDay } from '../utils/dataLog
 
 import { CATEGORY_COLORS_ARRAY } from '../constants/categories';
 
-const TapRupee = ({ x, y, id, onComplete }) => {
+const TapRupee = ({ x, y, id, onComplete, currency }) => {
   const [translateY] = useState(new Animated.Value(0));
   const [opacity] = useState(new Animated.Value(1));
 
@@ -301,7 +301,7 @@ export default function DashboardScreen({ navigation }) {
       <TouchableWithoutFeedback onPress={handleTap}>
         <View style={{ minHeight: Dimensions.get('window').height - 100 }}>
           {tapRupees.map(rupee => (
-            <TapRupee key={rupee.id} x={rupee.x} y={rupee.y} id={rupee.id} onComplete={removeRupee} />
+            <TapRupee key={rupee.id} x={rupee.x} y={rupee.y} id={rupee.id} onComplete={removeRupee} currency={currency} />
           ))}
 
           <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
@@ -357,10 +357,11 @@ export default function DashboardScreen({ navigation }) {
             {/* Balance box - only show for current month */}
             {isCurrentMonth && (
               <Animatable.View key={`balance-${animKey}`} animation="fadeInUp" delay={200} style={styles.balanceRow}>
-                <View style={[styles.box, styles.balanceBox]}>
+                <TouchableOpacity style={[styles.box, styles.balanceBox]} onPress={() => navigation.navigate('Expense')} activeOpacity={0.75}>
                   <Text style={styles.title}>BALANCE.</Text>
                   <Text style={styles.amount}>{currency}{balance.toFixed(2)}</Text>
-                </View>
+                  <Text style={styles.tapHint}>tap to add income ›</Text>
+                </TouchableOpacity>
                 {streak > 0 && (
                   <View style={styles.streakPill}>
                     <Text style={styles.streakText}>🔥 {streak} day streak</Text>
@@ -369,9 +370,12 @@ export default function DashboardScreen({ navigation }) {
               </Animatable.View>
             )}
 
-            <Animatable.View key={`spent-${animKey}`} animation="fadeInUp" delay={isCurrentMonth ? 400 : 200} style={styles.box}>
-              <Text style={styles.title}>SPENT THIS MONTH.</Text>
-              <Text style={styles.amount}>{currency}{totalSpent.toFixed(2)}</Text>
+            <Animatable.View key={`spent-${animKey}`} animation="fadeInUp" delay={isCurrentMonth ? 400 : 200}>
+              <TouchableOpacity style={styles.box} onPress={() => navigation.navigate('Expense')} activeOpacity={0.75}>
+                <Text style={styles.title}>SPENT THIS MONTH.</Text>
+                <Text style={styles.amount}>{currency}{totalSpent.toFixed(2)}</Text>
+                <Text style={styles.tapHint}>tap to add expense ›</Text>
+              </TouchableOpacity>
             </Animatable.View>
 
             <Animatable.View key={`saved-${animKey}`} animation="fadeInUp" delay={isCurrentMonth ? 500 : 300} style={styles.boxGreen}>
@@ -821,6 +825,13 @@ const styles = StyleSheet.create({
     color: '#4ade80',
     fontFamily: 'PixelFont',
     fontSize: 24,
+  },
+  tapHint: {
+    color: '#4a9eff',
+    fontFamily: 'UbuntuMono',
+    fontSize: 10,
+    marginTop: 6,
+    opacity: 0.6,
   },
   monthNav: {
     flexDirection: 'row',

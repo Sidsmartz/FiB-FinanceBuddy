@@ -42,6 +42,10 @@ export default function IncomeScreen() {
     if (!selectedFlow || !savingsAlloc || !spendAlloc) return;
 
     const flow = incomeFlows.find(f => f.id === selectedFlow);
+    if (!flow) {
+      setSelectedFlow(null);
+      return;
+    }
     const total = parseFloat(savingsAlloc) + parseFloat(spendAlloc);
 
     if (total > flow.amount) {
