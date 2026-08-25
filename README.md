@@ -1,6 +1,6 @@
 # FiB - Finance Buddy
 
-![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.5.0-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS-lightgrey.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
