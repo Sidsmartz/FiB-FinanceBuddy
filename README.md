@@ -1,82 +1,124 @@
-# FiB - Finance Buddy
+# FiB — Finance Buddy
 
-![Version](https://img.shields.io/badge/version-1.5.0-blue.svg)
-![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS-lightgrey.svg)
+![Version](https://img.shields.io/badge/version-1.6.0-blue.svg)
+![Platform](https://img.shields.io/badge/platform-Android-lightgrey.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
-A straightforward, fully offline personal finance tracker. It features a bongocat as your financial buddy to keep things lightweight and fun, acting like a digital savings piggy bank.
-
-FinanceBuddy is designed to just work. No accounts to create, no cloud syncing to deal with, and absolutely no data collection. All of your financial history stays locally on your device where it belongs.
+A pixel-art personal finance tracker. Fully offline, no accounts, no ads, no cloud. Your data lives on your device.
 
 ---
 
 ## Features
 
-- **100% Offline and Private:** Your data never leaves your phone. You have full ownership of your data.
-- **Income and Expense Tracking:** Log your daily transactions and see exactly where your money goes.
-- **Insights and Analytics:** View your spending habits with clean, easy-to-read charts.
-- **Extremely Fast:** Designed with performance in mind. You can add a transaction in seconds.
-- **Dark Mode UI:** A modern interface that is easy on the eyes.
-- **Home Screen Widget:** Log quick expenses right from your Android home screen.
-- **Bongocat Buddy:** Your personal finance companion keeping track of your digital piggy bank.
+### Core Tracking
+- **Quick Log & Full Log** — Log expenses in seconds with a 2-column category grid, or use the full form with title, split amount, and date picker
+- **Balance Management** — Add income credits manually; balance updates in real time
+- **Savings Goals** — Create goals and contribute to them; progress tracked with a 3D piggy bank
+- **Income Flows** — Record expected income with source, amount, and date; plan savings/spend allocations; mark as complete; or delete
 
-## Quick Start (Local Development)
+### Analytics & Insights
+- **Month-over-Month Insight Card** — Compares current month vs previous month spending per category; highlights the largest change
+- **7-Day Spending Chart** — Line chart of the last 7 days
+- **Full Month Chart** — Daily spending across the whole selected month
+- **Pie Chart** — Spending breakdown by category for any month
+- **Month Navigation** — Swipe back through any past month on the dashboard
 
-This is a React Native project built with Expo.
+### Budgets
+- **Per-Category Monthly Budgets** — Set a limit for each category; saves on blur
+- **Progress Bars** — Colour-coded (green / amber / red) budget bars on the dashboard
+- **Budget Screen** — Accessible from the wallet icon in the dashboard header
 
-### Prerequisites
-- Node.js (v18 or newer recommended)
-- Android Studio / Xcode (for emulation) or the Expo Go app on your physical device.
+### Categories
+- **13 Built-in Categories** — Food, Groceries, Transport, Health, Shopping, Entertainment, Movies, Subscriptions, Utilities, Education, EMI, Gifts, Others
+- **Custom Categories** — Add your own (up to 20 total); persisted locally
 
-### Installation
+### Streaks & Notifications
+- **Daily Logging Streak** — Tracks consecutive days of expense logging; shown as a 🔥 pill next to balance
+- **Daily 8 PM Notification** — Scheduled once on first launch; reminds you to log for the day
+- **Notification Denied Banner** — Dismissible in-app banner with a Settings deep-link if permission was refused
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/Sidsmartz/FiB-FinanceBuddy.git
-   cd FiB-FinanceBuddy
-   ```
+### Personalisation
+- **Onboarding Flow** — 3-step first-run setup: name + currency → income setup → budget limits
+- **Display Name + Greeting** — "Hello, {name}! Good morning/afternoon/evening 🌅" at the top of the dashboard
+- **Currency Selection** — Choose from 100+ world currencies during onboarding; changeable any time in Settings; symbol appears on every amount across all screens
+- **Settings Screen** — Searchable currency picker accessible from the dashboard header
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+### Storage & Architecture
+- **SQLite (expo-sqlite)** — All data stored in a local `fib.db` database
+- **One-time AsyncStorage Migration** — Existing v1 data is migrated to SQLite on first launch; AsyncStorage is then cleared
+- **Meta Table** — Key-value store for flags (migrated, onboarding_complete, notification_id, streak, currency, user_name, etc.)
 
-3. Start the development server:
-   ```bash
-   npx expo start
-   ```
+### Widget
+- **Android Home Screen Widget** — Shows today's balance; "LOG EXPENSE" button launches a quick-log overlay that writes directly to SQLite
 
-4. Press `a` in the terminal to open on Android, `i` to open on iOS, or scan the QR code using the Expo Go app on your physical phone.
+### Support
+- **Buy Me a Diet Coke 🥤** — Links to [support-fib.vercel.app](https://support-fib.vercel.app) from the Goals screen (UPI QR with dynamic amount)
 
-## Building and Publishing
+---
 
-We use Expo Application Services (EAS) for builds.
-To build an Android App Bundle (.aab) for the Google Play Store:
+## Screens
+
+| Screen | Description |
+|--------|-------------|
+| **OnboardingScreen** | 3-step first-run: welcome + name + currency / income setup / budget setup |
+| **DashboardScreen** | Balance, streak pill, greeting, insight card, charts, pie chart, budget bars, recent expenses |
+| **ExpenseScreen** | Quick-log (category grid), Full-log (collapsible), Add Balance, Add to Savings |
+| **GoalsScreen** | Savings goals list with progress bars + 3D piggy bank + support section |
+| **TransactionsScreen** | Tabbed view of Expenses / Balance / Savings with category filter + date range filter |
+| **IncomeScreen** | Income flows list with add, allocate, complete, and delete |
+| **BudgetScreen** | Per-category budget editor (saves on blur) |
+| **SettingsScreen** | Currency picker with search |
+
+---
+
+## Tech Stack
+
+| | |
+|---|---|
+| Framework | React Native 0.83 + Expo SDK 55 |
+| Storage | expo-sqlite (SQLite) |
+| Navigation | React Navigation v7 (bottom tabs + native stack) |
+| Charts | react-native-chart-kit |
+| 3D | Three.js + expo-gl |
+| Animations | react-native-animatable |
+| Widget | react-native-android-widget |
+| Notifications | expo-notifications |
+| Testing | Jest + fast-check (property-based tests) |
+| Fonts | PixelFont (headings), Ubuntu Mono (body) |
+
+---
+
+## Quick Start
 
 ```bash
-eas build --platform android
+git clone https://github.com/Sidsmartz/FiB-FinanceBuddy.git
+cd FiB-FinanceBuddy
+npm install
+npx expo start
 ```
-*(See `RELEASE.md` for full instructions on version bumping, git tagging, and Play Console deployment.)*
 
-## Contributing
+Press `a` for Android, `i` for iOS, or scan the QR with Expo Go.
 
-Contributions, issues, and feature requests are welcome. If you want to help make FinanceBuddy better, feel free to fork the repository and submit a pull request.
+## Building
 
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+```bash
+# APK (sideload / testing)
+eas build --platform android --profile preview
 
-## Credits & Attributions
+# AAB (Play Store)
+eas build --platform android --profile production
+```
 
-We are incredibly grateful to the creators who provided open-source or free-to-use assets for this project:
+See `RELEASE.md` for version bump, tagging, and Play Console steps.
 
-- **3D Piggy Bank Model**: ["Piggy Bank"](https://sketchfab.com/3d-models/piggy-bank-4d5bf8d42f2d4c3493dc13a168944d64) by Sketchfab users, used as the main visual element for savings.
-- **Fonts**: 
-  - *Ubuntu Mono*: Licensed under the [Ubuntu Font License](https://ubuntu.com/legal/font-licence).
-  - *Press Start 2P*: Created by CodeMan38, licensed under the [SIL Open Font License](https://scripts.sil.org/OFL).
+---
+
+## Credits
+
+- **3D Piggy Bank** — [Sketchfab](https://sketchfab.com/3d-models/piggy-bank-4d5bf8d42f2d4c3493dc13a168944d64)
+- **Ubuntu Mono** — [Ubuntu Font License](https://ubuntu.com/legal/font-licence)
+- **Press Start 2P** — CodeMan38, [SIL Open Font License](https://scripts.sil.org/OFL)
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+MIT — see `LICENSE`.
